@@ -4,6 +4,8 @@ Named knowledge bases for the [Mirelo Studio](https://mirelo.ai/studio) assistan
 
 This is a showcase of how that feature could look. It is not a production part of Studio. Your notes stay in the browser, and a selected base is sent with the assistant prompt.
 
+![Creating a knowledge base in Mirelo Studio](resources/create-kb.gif)
+
 ## Features
 
 - A **Knowledge** item in the sidebar. The page lists your bases and lets you add or delete them. Each base has a name, general context, and an optional sound profile for speech, music, and sound effects. The profile is free text plus attributes you can pick for inspiration.
