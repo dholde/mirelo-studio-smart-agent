@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Mirelo Studio Knowledge Base",
+  "version": "0.2.0",
+  "description": "Named knowledge bases for the Mirelo Studio assistant.",
+  "host_permissions": ["https://mirelo.ai/*"],
+  "web_accessible_resources": [
+    {
+      "resources": ["content.js"],
+      "matches": ["https://mirelo.ai/*"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://mirelo.ai/studio", "https://mirelo.ai/studio/*"],
+      "js": ["inject.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
