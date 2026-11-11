@@ -4,15 +4,27 @@ Named knowledge bases for the [Mirelo Studio](https://mirelo.ai/studio) assistan
 
 This is a showcase of how that feature could look. It is not a production part of Studio. Your notes stay in the browser, and a selected base is sent with the assistant prompt.
 
-![Creating a knowledge base in Mirelo Studio](resources/create-kb.gif)
-
 ## Features
 
-- A **Knowledge** item in the sidebar. The page lists your bases and lets you add or delete them. Each base has a name, general context, and an optional sound profile for speech, music, and sound effects. The profile is free text plus attributes you can pick for inspiration.
-- A selector above the editor assistant. It reads **Select knowledge base** until you pick one.
-- **None** clears the selection and closes the menu. **Add +** opens a dialog in the center of the page. Saving there creates the base and selects it.
-- The next prompt includes the selected base (its name, general context, and any filled sound profile) followed by your own text. Choose **None** when you do not want the base included.
-- Notes are stored in this browser only.
+### Adding knowledge bases
+
+Create knowledge bases that can be used across projects:
+
+<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;General description and instructions about the project
+
+<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;Specific descriptions for SFX, speech, and music
+
+<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;Get inspiration: build prompts from ready-made components for SFX, speech, and music
+
+![Adding a knowledge base](resources/create-kb.gif)
+
+### Selecting a base
+
+A selector above the editor assistant reads **Select knowledge base** until you pick one. **None** clears the selection and closes the menu. **Add +** opens the same form in a dialog. Saving there creates the base and selects it.
+
+The next prompt includes the selected base (its name, general context, and any filled sound profile) followed by your own text. Choose **None** when you do not want the base included.
+
+Notes are stored in this browser only.
 
 Keep the notes short. Studio refuses a message longer than 4000 characters, and the notes count toward that limit. Sending still goes through the Studio assistant, so it uses credits the same way a normal prompt does.
 
