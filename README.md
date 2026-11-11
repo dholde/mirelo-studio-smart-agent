@@ -36,6 +36,14 @@ Conveniently create knowledge bases on the go:
 
 <p><img src="resources/use-kb-in-chat-window.gif" width="100%" alt="Using a knowledge base in Mirelo Assistant chat"></p>
 
+<h3><img src="resources/feature-prompt.svg" width="22" height="22" alt="" align="absmiddle"> &nbsp;&nbsp;Prompt Engineer</h3>
+
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Analyze your prompts
+
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Get suggestions for optimized prompts that generate better SFX, speech and music
+
+<p><img src="resources/prompt-architect-window.gif" width="100%" alt="Getting help creating optimized prompts"></p>
+
 ## Install
 
 1. Open `chrome://extensions`.
