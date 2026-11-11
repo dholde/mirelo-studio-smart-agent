@@ -148,6 +148,7 @@
       font-size: 11px;
       color: #f0a0a0;
     }
+    [data-mirelo-kb-select] [data-kb-pill] { margin: 0; }
     [data-mirelo-kb-modal] {
       position: fixed;
       inset: 0;
@@ -168,6 +169,48 @@
       color: #f2f2f2;
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
     }
+    [data-kb-pill] {
+      display: inline-flex;
+      align-self: flex-start;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      height: 28px;
+      margin: 0 0 8px;
+      padding: 0 12px;
+      border: 1px solid #3a3a3a;
+      border-radius: 999px;
+      background: #1c1c1c;
+      color: inherit;
+      font: inherit;
+      font-size: 13px;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    [data-kb-pill] span { overflow: hidden; text-overflow: ellipsis; }
+    [data-kb-pill] svg { width: 14px; height: 14px; display: block; flex: none; }
+    [data-kb-pill]:hover { background: #2a2a2a; }
+    [data-kb-hidden-line] { display: none !important; }
+    [data-kb-prompt] { display: block; white-space: pre-wrap; }
+    [data-mirelo-kb-view] {
+      position: fixed;
+      inset: 0;
+      z-index: 95;
+      display: flex;
+      overflow: auto;
+      padding: 32px 16px;
+      background: rgba(0, 0, 0, 0.55);
+    }
+    [data-mirelo-kb-view][hidden] { display: none; }
+    [data-mirelo-kb-view] .kb-view-card {
+      width: min(720px, 100%);
+      margin: auto;
+      flex: none;
+      color: #f2f2f2;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    }
+    [data-mirelo-kb-view] .kb-missing { margin: 0; color: #9a9a9a; font-size: 13px; }
     [data-mirelo-kb-page] {
       box-sizing: border-box;
       position: absolute;
@@ -546,6 +589,153 @@
     return `[Knowledge base: ${base.name}]\n${body}\n---\n`;
   }
 
+  function parseKnowledgeMessage(text) {
+    const normalized = String(text || "").replace(/\r\n/g, "\n").trim();
+    const match = normalized.match(/^\[Knowledge base: ([^\n\]]+)\]\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (!match) return null;
+    return { name: match[1], body: match[2].trim(), prompt: match[3].trim() };
+  }
+
+  function parseKnowledgeBody(body) {
+    const sound = emptySound();
+    const descriptions = Object.fromEntries(ASPECTS.map((aspect) => [aspect.id, []]));
+    const labels = Object.fromEntries(ASPECTS.map((aspect) => [aspect.label, aspect.id]));
+    const context = [];
+    let current = null;
+    for (const line of String(body || "").split("\n")) {
+      const heading = line.trim().replace(/:$/, "");
+      if (labels[heading] && line.trim().endsWith(":")) {
+        current = labels[heading];
+        continue;
+      }
+      if (!current) {
+        context.push(line);
+        continue;
+      }
+      if (line.startsWith("Attributes:")) {
+        sound[current].attributes = line.slice("Attributes:".length).split(",").map((item) => item.trim()).filter(Boolean);
+      } else if (line.trim()) descriptions[current].push(line);
+    }
+    for (const aspect of ASPECTS) sound[aspect.id].description = descriptions[aspect.id].join("\n");
+    return { context: context.join("\n").trim(), sound };
+  }
+
+  function baseByName(name) {
+    const data = load();
+    const selected = data.bases.find((base) => base.id === data.selectedId && base.name === name);
+    return selected || data.bases.find((base) => base.name === name) || null;
+  }
+
+  function makePill(name, raw) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.kbPill = "";
+    button.dataset.kbName = name;
+    if (raw) button.dataset.kbRaw = raw;
+    button.setAttribute("aria-label", `View knowledge base ${name}`);
+    const label = document.createElement("span");
+    label.textContent = name;
+    button.append(bookIcon(), label);
+    return button;
+  }
+
+  function collapseKnowledgeMessage(el) {
+    if (el.querySelector(":scope > [data-kb-pill]")) return;
+    const children = [...el.children];
+    if (children.length >= 2) {
+      const lines = children.map((child) => (child.innerText || "").trim());
+      const start = lines.findIndex((line) => line.startsWith("[Knowledge base:"));
+      const dash = lines.findIndex((line, index) => index > start && line === "---");
+      if (start !== -1 && dash !== -1 && lines[start].endsWith("]")) {
+        const name = lines[start].slice("[Knowledge base: ".length, -1);
+        const raw = children.slice(start, dash + 1).map((child) => child.innerText).join("\n");
+        for (let i = start; i <= dash; i++) children[i].setAttribute("data-kb-hidden-line", "");
+        children[start].before(makePill(name, raw));
+        return;
+      }
+    }
+    const visible = el.innerText || "";
+    const parsed = parseKnowledgeMessage(visible);
+    if (!parsed) return;
+    const hidden = document.createElement("span");
+    hidden.dataset.kbHiddenLine = "";
+    while (el.firstChild) hidden.append(el.firstChild);
+    const prompt = document.createElement("div");
+    prompt.dataset.kbPrompt = "";
+    prompt.textContent = parsed.prompt;
+    el.append(makePill(parsed.name, visible), prompt, hidden);
+  }
+
+  function ensureChatPills() {
+    if (!document.body?.textContent?.includes("[Knowledge base:")) return;
+    const skip = "[data-mirelo-kb-page], [data-mirelo-kb-modal], [data-mirelo-kb-view], [data-testid='editor-assistant-input'], [data-testid='editor-assistant-composer']";
+    const candidates = [];
+    for (const el of document.querySelectorAll("p, div, li, article, section")) {
+      if (el.closest(skip) || el.querySelector("[data-kb-pill]")) continue;
+      const raw = el.textContent || "";
+      if (!raw.includes("[Knowledge base:") || !raw.includes("---")) continue;
+      candidates.push(el);
+    }
+    const smallest = candidates.filter((el) => !candidates.some((other) => other !== el && el.contains(other)));
+    for (const el of smallest) {
+      const visible = el.innerText || "";
+      if (visible.includes("[Knowledge base:") && visible.includes("---")) collapseKnowledgeMessage(el);
+    }
+  }
+
+  function profileRowsHtml(sound) {
+    return filledAspects(sound).map((aspect) => {
+      const value = sound[aspect.id];
+      return `
+        <div class="profile-row">
+          <span class="profile-label">${aspect.icon}${esc(aspect.label)}</span>
+          <div class="profile-content">
+            ${value.description ? `<p>${esc(value.description)}</p>` : ""}
+            ${value.attributes.length ? `<div class="chips">${value.attributes.map((tag) => `<span class="chip chip-static">${esc(tag)}</span>`).join("")}</div>` : ""}
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function closeKnowledgeView() {
+    const view = document.querySelector("[data-mirelo-kb-view]");
+    if (view) view.hidden = true;
+  }
+
+  function openKnowledgeView(name, pill) {
+    const stored = baseByName(name);
+    let base = stored;
+    if (!base) {
+      const raw = pill?.dataset.kbRaw || "";
+      const parsed = parseKnowledgeMessage(raw.endsWith("\n") ? raw : `${raw}\n`);
+      base = parsed
+        ? { name, ...parseKnowledgeBody(parsed.body) }
+        : { name, context: "", sound: emptySound() };
+    }
+    let view = document.querySelector("[data-mirelo-kb-view]");
+    if (!view) {
+      view = document.createElement("div");
+      view.hidden = true;
+      view.setAttribute("data-mirelo-kb-view", "");
+      view.addEventListener("click", (event) => {
+        if (event.target === view || event.target.closest("[data-kb-view-close]")) closeKnowledgeView();
+      });
+      document.body.append(view);
+    }
+    const rows = profileRowsHtml(base.sound);
+    view.innerHTML = `
+      <div class="card kb-ui kb-view-card" role="dialog" aria-modal="true" aria-label="${esc(base.name)}">
+        <div class="card-head">
+          <h2 class="editor-title">${esc(base.name)}</h2>
+          <button type="button" class="btn" data-kb-view-close>Close</button>
+        </div>
+        ${stored ? "" : '<p class="kb-missing">This knowledge base is no longer saved in this browser.</p>'}
+        ${base.context ? `<p class="card-body">${esc(base.context)}</p>` : ""}
+        ${rows ? `<div class="profile">${rows}</div>` : ""}
+      </div>`;
+    view.hidden = false;
+  }
+
   function editorElement() {
     return document.querySelector('[data-testid="editor-assistant-input"]');
   }
@@ -762,6 +952,12 @@
     const menu = row.querySelector("[data-kb-menu]");
     const selected = data.bases.find((base) => base.id === data.selectedId);
     trigger.textContent = selected ? selected.name : PLACEHOLDER;
+    const currentPill = row.querySelector("[data-kb-pill]");
+    if (!selected) currentPill?.remove();
+    else if (currentPill?.dataset.kbName !== selected.name) {
+      currentPill?.remove();
+      trigger.after(makePill(selected.name));
+    }
     const signature = JSON.stringify(data.bases.map((base) => [base.id, base.name, base.id === data.selectedId]));
     if (menu.dataset.signature === signature) return;
     menu.dataset.signature = signature;
@@ -779,17 +975,7 @@
   function cardHtml(base) {
     const filled = filledAspects(base.sound);
     const expanded = expandedIds.has(base.id);
-    const profileRows = filled.map((aspect) => {
-      const value = base.sound[aspect.id];
-      return `
-        <div class="profile-row">
-          <span class="profile-label">${aspect.icon}${esc(aspect.label)}</span>
-          <div class="profile-content">
-            ${value.description ? `<p>${esc(value.description)}</p>` : ""}
-            ${value.attributes.length ? `<div class="chips">${value.attributes.map((tag) => `<span class="chip chip-static">${esc(tag)}</span>`).join("")}</div>` : ""}
-          </div>
-        </div>`;
-    }).join("");
+    const profileRows = profileRowsHtml(base.sound);
 
     return `
       <article class="card">
@@ -1072,9 +1258,17 @@
       ensureNav();
       ensureSelector();
       ensurePage();
+      ensureChatPills();
     });
   }
 
+  document.addEventListener("click", (event) => {
+    const pill = event.target.closest?.("[data-kb-pill]");
+    if (!pill) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openKnowledgeView(pill.dataset.kbName || "", pill);
+  }, true);
   document.addEventListener("click", (event) => {
     if (!event.target.closest?.("[data-mirelo-kb-select]")) closeMenus();
   });
@@ -1082,6 +1276,7 @@
     if (event.key !== "Escape") return;
     closeMenus();
     closeModal();
+    closeKnowledgeView();
   });
   window.addEventListener("popstate", render);
   window.addEventListener("hashchange", render);

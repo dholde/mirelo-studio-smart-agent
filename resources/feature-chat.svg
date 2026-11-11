@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+  <style>
+    .badge { fill: #4ADE80; }
+    .glyph { stroke: #052E16; }
+    @media (prefers-color-scheme: light) {
+      .badge { fill: #16A34A; }
+      .glyph { stroke: #F0FDF4; }
+    }
+  </style>
+  <rect class="badge" width="20" height="20" rx="6"/>
+  <path class="glyph" d="M6.2 5.8h7.6a1.7 1.7 0 0 1 1.7 1.7v4.2a1.7 1.7 0 0 1-1.7 1.7H9.1L7.2 15.6v-2.2H6.2a1.7 1.7 0 0 1-1.7-1.7V7.5a1.7 1.7 0 0 1 1.7-1.7z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
