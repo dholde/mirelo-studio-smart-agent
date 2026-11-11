@@ -18,6 +18,14 @@ Create knowledge bases that can be used across projects:
 
 ![Adding a knowledge base](resources/create-kb.gif)
 
+### Produce consistent sounds
+
+<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;Agent Chat
+
+<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;The agent will use the information as always-on context for consistent sound generation
+
+![Using a knowledge base in agent chat](resources/use-kb-in-chat.gif)
+
 ### Selecting a base
 
 A selector above the editor assistant reads **Select knowledge base** until you pick one. **None** clears the selection and closes the menu. **Add +** opens the same form in a dialog. Saving there creates the base and selects it.

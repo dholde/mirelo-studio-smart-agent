@@ -148,6 +148,7 @@
       font-size: 11px;
       color: #f0a0a0;
     }
+    [data-mirelo-kb-select] [data-kb-pill] { margin: 0; }
     [data-mirelo-kb-modal] {
       position: fixed;
       inset: 0;
@@ -951,6 +952,12 @@
     const menu = row.querySelector("[data-kb-menu]");
     const selected = data.bases.find((base) => base.id === data.selectedId);
     trigger.textContent = selected ? selected.name : PLACEHOLDER;
+    const currentPill = row.querySelector("[data-kb-pill]");
+    if (!selected) currentPill?.remove();
+    else if (currentPill?.dataset.kbName !== selected.name) {
+      currentPill?.remove();
+      trigger.after(makePill(selected.name));
+    }
     const signature = JSON.stringify(data.bases.map((base) => [base.id, base.name, base.id === data.selectedId]));
     if (menu.dataset.signature === signature) return;
     menu.dataset.signature = signature;
