@@ -5,6 +5,14 @@
   const STORAGE_KEY = "mirelo-knowledge";
   const LIMIT = 4000;
   const PLACEHOLDER = "Select knowledge base";
+  const OPTIMIZE_STEPS = [
+    "Analyzing prompt ...",
+    "Correcting prompt ...",
+    "Generating optimized prompt ...",
+  ];
+  const OPTIMIZE_ORIGINAL = "Make some nice sounds for this video. Kids are playing outside, maybe a playground or a park, and it should feel happy and playful and also really happy and fun. I want background music that is cinematic and epic, but also quiet, small, and acoustic. Add sound effects of real children screaming, and also soft cute taps in the background. Use the knowledge base, unless something else sounds better.";
+  const OPTIMIZE_IMPROVEMENTS = "The given prompt is vague, repeats itself, and asks for opposite things at once. I would suggest naming the scene, the sounds, and one mood. Take a look at the improved prompt.";
+  const OPTIMIZE_PROMPT = "Kids playing happily on a playground. Using the knowledge base, create the sound effects and background music.\nSoft swings, light footsteps, and a gentle acoustic bed.\nPlayful and warm, never loud.";
 
   const ICONS = {
     speech: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><path d="M12 17v5"/></svg>',
@@ -310,6 +318,83 @@
     .kb-ui .input::placeholder { color: #6b6b6b; }
     .kb-ui .input:focus { border-color: #3a3a3a; }
     .kb-ui textarea.input { resize: vertical; min-height: 96px; line-height: 1.55; }
+    .kb-ui .optimize-field { position: relative; display: flex; flex-direction: column; }
+    .kb-ui .optimize-field > .input { margin: 0; padding-right: 46px; }
+    .kb-ui .optimize-field > textarea.input { padding-bottom: 46px; }
+    .kb-ui .optimize-btn {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      z-index: 1;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 1px solid #3a3a3a;
+      background: #121212;
+      color: #cfcfcf;
+      cursor: pointer;
+    }
+    .kb-ui .optimize-field:has(textarea) .optimize-btn { bottom: 20px; }
+    .kb-ui .optimize-btn svg { width: 14px; height: 14px; display: block; }
+    .kb-ui .optimize-btn:hover { background: #242424; color: #f2f2f2; }
+    .kb-ui .optimize-btn:focus-visible { outline: 2px solid #f2f2f2; outline-offset: 2px; }
+    .kb-ui textarea.optimize-readonly {
+      min-height: 0;
+      resize: none;
+      color: #cfcfcf;
+      cursor: default;
+    }
+    [data-optimize-modal] {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: flex;
+      align-items: flex-start;
+      overflow: auto;
+      padding: 32px 16px;
+      background: rgba(0, 0, 0, 0.55);
+    }
+    [data-optimize-modal][hidden] { display: none; }
+    [data-optimize-modal] [hidden] { display: none !important; }
+    [data-optimize-modal] .optimize-dialog {
+      width: min(640px, 100%);
+      margin: auto;
+      flex: none;
+      color: #f2f2f2;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    }
+    [data-optimize-modal] .optimize-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 36px 8px;
+      text-align: center;
+    }
+    [data-optimize-modal] .optimize-loading p { margin: 0; color: #cfcfcf; }
+    [data-optimize-modal] .optimize-spinner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #3a3a3a;
+      border-top-color: #f2f2f2;
+      animation: kb-optimize-spin .8s linear infinite;
+    }
+    @keyframes kb-optimize-spin { to { transform: rotate(360deg); } }
+    [data-optimize-modal] .optimize-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    [data-optimize-modal] [data-optimize-result] {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
     .kb-ui .field-label {
       font-size: 13px;
       color: #9a9a9a;
@@ -856,6 +941,115 @@
     if (modal) modal.hidden = true;
   }
 
+  let optimizeTimer = 0;
+  let optimizeTarget = null;
+
+  function ensureOptimizeModal() {
+    let modal = document.querySelector("[data-optimize-modal]");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.setAttribute("data-optimize-modal", "");
+    modal.className = "kb-ui";
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="card optimize-dialog" role="dialog" aria-modal="true" aria-label="Optimize prompt">
+        <div class="optimize-loading" data-optimize-loading>
+          <div class="optimize-spinner" aria-hidden="true"></div>
+          <p data-optimize-status aria-live="polite"></p>
+        </div>
+        <div data-optimize-result hidden>
+          <div>
+            <p class="field-label">Original prompt</p>
+            <textarea class="input optimize-readonly" readonly rows="5">${esc(OPTIMIZE_ORIGINAL)}</textarea>
+          </div>
+          <div>
+            <p class="field-label">Suggested improvements</p>
+            <textarea class="input optimize-readonly" readonly rows="4">${esc(OPTIMIZE_IMPROVEMENTS)}</textarea>
+          </div>
+          <div>
+            <p class="field-label">Optimized Prompt</p>
+            <textarea class="input optimize-readonly" readonly rows="4">${esc(OPTIMIZE_PROMPT)}</textarea>
+          </div>
+          <div class="optimize-actions">
+            <button type="button" class="btn btn-primary" data-optimize-action="accept">Accept optimized prompt</button>
+            <button type="button" class="btn" data-optimize-action="keep">Keep original prompt</button>
+          </div>
+        </div>
+      </div>`;
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        closeOptimize(false);
+        return;
+      }
+      const action = event.target.closest("[data-optimize-action]");
+      if (!action || !modal.contains(action)) return;
+      closeOptimize(action.dataset.optimizeAction === "accept");
+    });
+    document.body.append(modal);
+    return modal;
+  }
+
+  function openOptimize(root, field, trigger) {
+    const modal = ensureOptimizeModal();
+    window.clearTimeout(optimizeTimer);
+    optimizeTarget = {
+      root,
+      trigger,
+      kind: field.hasAttribute("data-kb-context") ? "context" : "aspect",
+      aspectId: root.kbState?.activeAspect,
+    };
+    const status = modal.querySelector("[data-optimize-status]");
+    modal.querySelector("[data-optimize-loading]").hidden = false;
+    modal.querySelector("[data-optimize-result]").hidden = true;
+    let step = 0;
+    status.textContent = OPTIMIZE_STEPS[0];
+    modal.hidden = false;
+    const advance = () => {
+      step += 1;
+      if (step < OPTIMIZE_STEPS.length) {
+        status.textContent = OPTIMIZE_STEPS[step];
+        optimizeTimer = window.setTimeout(advance, 2100);
+        return;
+      }
+      modal.querySelector("[data-optimize-loading]").hidden = true;
+      modal.querySelector("[data-optimize-result]").hidden = false;
+      modal.querySelector("[data-optimize-action='accept']")?.focus();
+    };
+    optimizeTimer = window.setTimeout(advance, 2100);
+  }
+
+  function applyOptimized(target) {
+    const state = target.root?.kbState;
+    if (!state) return;
+    if (target.kind === "context") {
+      state.context = OPTIMIZE_PROMPT;
+      const live = target.root.querySelector("[data-kb-context]");
+      if (live) live.value = OPTIMIZE_PROMPT;
+      return;
+    }
+    const aspect = state.sound[target.aspectId];
+    if (!aspect) return;
+    aspect.description = OPTIMIZE_PROMPT;
+    if (state.activeAspect === target.aspectId) {
+      const live = target.root.querySelector("[data-aspect-text]");
+      if (live) live.value = OPTIMIZE_PROMPT;
+    }
+    renderTabs(target.root, state);
+    renderSummary(target.root, state);
+  }
+
+  function closeOptimize(accept) {
+    const modal = document.querySelector("[data-optimize-modal]");
+    if (!modal || modal.hidden) return false;
+    window.clearTimeout(optimizeTimer);
+    if (accept && optimizeTarget) applyOptimized(optimizeTarget);
+    modal.hidden = true;
+    const trigger = optimizeTarget?.trigger;
+    optimizeTarget = null;
+    if (trigger?.isConnected) trigger.focus();
+    return true;
+  }
+
   function openModal() {
     let modal = document.querySelector("[data-mirelo-kb-modal]");
     if (!modal) {
@@ -1010,15 +1204,20 @@
       : '<p class="empty">No knowledge bases yet.</p>';
   }
 
+  function optimizeButton() {
+    return `<button type="button" class="optimize-btn" data-optimize aria-label="Optimize prompt">${ICONS.sparkle}</button>`;
+  }
+
   function editorMarkup(prefix, submitLabel, showCancel) {
     return `
       <div>
         <label class="field-label" for="${prefix}-name">Name</label>
         <input id="${prefix}-name" class="input" data-kb-name placeholder="Name" autocomplete="off" />
       </div>
-      <div>
+      <div class="optimize-field">
         <label class="field-label" for="${prefix}-context">General context</label>
         <textarea id="${prefix}-context" class="input" data-kb-context placeholder="What should the assistant know?"></textarea>
+        ${optimizeButton()}
       </div>
       <div class="section">
         <div class="section-head">
@@ -1056,9 +1255,10 @@
     const panel = root.querySelector("[data-aspect-panel]");
     panel.setAttribute("aria-labelledby", `${prefix}-tab-${aspect.id}`);
     panel.innerHTML = `
-      <div>
+      <div class="optimize-field">
         <label class="field-label" for="${prefix}-aspect">Describe ${esc(aspect.label.toLowerCase())}</label>
         <textarea id="${prefix}-aspect" class="input" data-aspect-text placeholder="${esc(aspect.placeholder)}">${esc(value.description)}</textarea>
+        ${optimizeButton()}
       </div>
       <div class="selected-row" aria-live="polite">
         ${value.attributes.length
@@ -1125,7 +1325,7 @@
     const panel = root.querySelector("[data-aspect-panel]");
     panel.addEventListener("click", (event) => {
       const button = event.target.closest("button");
-      if (!button) return;
+      if (!button || button.hasAttribute("data-optimize")) return;
       const focusAttr = button.dataset.attr || button.dataset.remove || "";
       if (button.dataset.attr) {
         if (!knownAttribute(state.activeAspect, button.dataset.attr)) return;
@@ -1150,6 +1350,12 @@
       state.sound[state.activeAspect].description = event.target.value;
       renderTabs(root, state);
       renderSummary(root, state);
+    });
+    root.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-optimize]");
+      if (!button || !root.contains(button)) return;
+      const field = button.parentElement?.querySelector("input, textarea");
+      if (field) openOptimize(root, field, button);
     });
     root.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1274,6 +1480,7 @@
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
+    if (closeOptimize(false)) return;
     closeMenus();
     closeModal();
     closeKnowledgeView();
