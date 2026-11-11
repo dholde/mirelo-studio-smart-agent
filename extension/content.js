@@ -6,6 +6,77 @@
   const LIMIT = 4000;
   const PLACEHOLDER = "Select knowledge base";
 
+  const ICONS = {
+    speech: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><path d="M12 17v5"/></svg>',
+    music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    sfx: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h3l3-8 4 16 3-8h7"/></svg>',
+    sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg>',
+    chevron: '<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  };
+
+  const ASPECTS = [
+    {
+      id: "speech",
+      label: "Speech",
+      icon: ICONS.speech,
+      placeholder: "e.g. A warm, friendly narrator who speaks like a trusted friend…",
+      groups: {
+        "Voice Characteristics": ["Deep", "High-pitched", "Warm", "Breathy", "Raspy"],
+        "Vocal Delivery": ["Conversational", "Narrative", "Instructional", "Theatrical", "Whispered"],
+        "Emotion & Tone": ["Calm", "Joyful", "Confident", "Serious", "Empathetic"],
+        "Pace & Rhythm": ["Slow", "Fast", "Steady", "Rhythmic", "Deliberate"],
+        "Articulation & Prosody": ["Clear", "Precise", "Monotone", "Expressive", "Emphatic"],
+      },
+    },
+    {
+      id: "music",
+      label: "Sound & Music",
+      icon: ICONS.music,
+      placeholder: "e.g. Soft acoustic textures, light percussion, never overpowering the voice…",
+      groups: {
+        "Mood & Atmosphere": ["Peaceful", "Mysterious", "Tense", "Uplifting", "Melancholic"],
+        "Timbre & Texture": ["Warm", "Bright", "Dark", "Smooth", "Gritty"],
+        "Rhythm & Tempo": ["Slow", "Fast", "Pulsating", "Steady", "Irregular"],
+        "Dynamics & Intensity": ["Subtle", "Gentle", "Powerful", "Intense", "Restrained"],
+        "Style & Aesthetics": ["Organic", "Electronic", "Cinematic", "Ambient", "Experimental"],
+      },
+    },
+    {
+      id: "sfx",
+      label: "SFX",
+      icon: ICONS.sfx,
+      placeholder: "e.g. Short, rounded UI sounds; cartoonish but never harsh…",
+      groups: {
+        "Realism & Stylization": ["Realistic", "Hyperrealistic", "Stylized", "Abstract", "Synthetic"],
+        "Intensity & Presence": ["Subtle", "Restrained", "Balanced", "Punchy", "Exaggerated"],
+        "Texture & Character": ["Clean", "Organic", "Polished", "Gritty", "Minimal"],
+      },
+    },
+  ];
+
+  function emptyAspect() {
+    return { description: "", attributes: [] };
+  }
+
+  function emptySound() {
+    return Object.fromEntries(ASPECTS.map((aspect) => [aspect.id, emptyAspect()]));
+  }
+
+  const expandedIds = new Set();
+
+  function createEditorState() {
+    return {
+      name: "",
+      context: "",
+      sound: emptySound(),
+      activeAspect: "speech",
+      inspirationOpen: true,
+    };
+  }
+
+  const pageState = createEditorState();
+
   const style = document.createElement("style");
   style.textContent = `
     [data-mirelo-kb-select] {
@@ -82,127 +153,320 @@
       inset: 0;
       z-index: 90;
       display: flex;
-      align-items: center;
-      justify-content: center;
       background: rgba(0, 0, 0, 0.55);
     }
     [data-mirelo-kb-modal][hidden] { display: none; }
+    [data-mirelo-kb-modal] {
+      align-items: flex-start;
+      overflow: auto;
+      padding: 32px 16px;
+    }
     [data-mirelo-kb-modal] form {
-      width: min(440px, calc(100vw - 32px));
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 20px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: var(--card);
-      color: var(--foreground);
+      width: min(760px, 100%);
+      margin: auto;
+      flex: none;
+      color: #f2f2f2;
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
-    }
-    [data-mirelo-kb-modal] h2 { margin: 0 0 4px; font-size: 16px; font-weight: 560; }
-    [data-mirelo-kb-modal] input,
-    [data-mirelo-kb-modal] textarea {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--muted);
-      color: var(--foreground);
-      font: inherit;
-      font-size: 14px;
-      padding: 10px 12px;
-    }
-    [data-mirelo-kb-modal] textarea { min-height: 120px; resize: vertical; }
-    [data-mirelo-kb-modal] .kb-actions { display: flex; justify-content: flex-end; gap: 8px; }
-    [data-mirelo-kb-modal] button {
-      height: 32px;
-      padding: 0 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--muted);
-      color: var(--foreground);
-      font: inherit;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    [data-mirelo-kb-modal] button.primary {
-      background: var(--foreground);
-      color: var(--background);
-      border-color: transparent;
     }
     [data-mirelo-kb-page] {
       box-sizing: border-box;
-      min-height: 100%;
-      padding: 40px 32px 64px;
-      color: var(--foreground);
-      font: inherit;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: 40px 20px 64px;
+      background: #000;
     }
-    [data-mirelo-kb-page] * { box-sizing: border-box; }
-    [data-mirelo-kb-page] h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 560;
+    .kb-ui {
+      color: #f2f2f2;
+      font: inherit;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .kb-ui * { box-sizing: border-box; }
+    .kb-ui button,
+    .kb-ui input,
+    .kb-ui textarea { font: inherit; color: inherit; height: auto; }
+    .kb-ui .kb-wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .kb-ui .page-header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 600;
       letter-spacing: -0.02em;
     }
-    [data-mirelo-kb-page] .kb-sub {
-      margin: 8px 0 28px;
-      color: color-mix(in srgb, var(--foreground) 62%, transparent);
-      font-size: 14px;
+    .kb-ui .page-header p { margin: 0; color: #9a9a9a; }
+    .kb-ui .kb-list { display: flex; flex-direction: column; gap: 20px; }
+    .kb-ui.card,
+    .kb-ui .card {
+      background: #121212;
+      border: 1px solid #2a2a2a;
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
-    [data-mirelo-kb-page] .kb-wrap { max-width: 720px; }
-    [data-mirelo-kb-page] .kb-card,
-    [data-mirelo-kb-page] form {
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: var(--card);
-      padding: 16px;
-    }
-    [data-mirelo-kb-page] .kb-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    [data-mirelo-kb-page] .kb-card { display: flex; gap: 12px; align-items: flex-start; }
-    [data-mirelo-kb-page] .kb-card h2 { margin: 0 0 6px; font-size: 14px; font-weight: 560; }
-    [data-mirelo-kb-page] .kb-card p {
-      margin: 0;
-      white-space: pre-wrap;
-      color: color-mix(in srgb, var(--foreground) 78%, transparent);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    [data-mirelo-kb-page] .kb-empty {
-      margin: 0 0 16px;
-      color: color-mix(in srgb, var(--foreground) 62%, transparent);
-      font-size: 14px;
-    }
-    [data-mirelo-kb-page] form { display: flex; flex-direction: column; gap: 10px; }
-    [data-mirelo-kb-page] input,
-    [data-mirelo-kb-page] textarea {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--muted);
-      color: var(--foreground);
-      font: inherit;
-      font-size: 14px;
-      padding: 10px 12px;
-    }
-    [data-mirelo-kb-page] textarea { min-height: 120px; resize: vertical; }
-    [data-mirelo-kb-page] .kb-actions { display: flex; gap: 8px; }
-    [data-mirelo-kb-page] button {
-      height: 32px;
-      padding: 0 12px;
+    .kb-ui .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .kb-ui .card-copy { flex: 1; min-width: 0; }
+    .kb-ui .card-title { font-weight: 600; font-size: 16px; margin: 0 0 4px; }
+    .kb-ui .card-body { color: #cfcfcf; margin: 0; white-space: pre-line; overflow-wrap: break-word; }
+    .kb-ui .card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .kb-ui .btn {
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--muted);
-      color: var(--foreground);
-      font: inherit;
+      padding: 8px 16px;
+      border: 1px solid #3a3a3a;
+      background: #1b1b1b;
+      cursor: pointer;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kb-ui .btn:hover { background: #242424; }
+    .kb-ui .btn-primary {
+      background: #ececec;
+      color: #0a0a0a;
+      border-color: #ececec;
+      font-weight: 500;
+      padding: 10px 20px;
+    }
+    .kb-ui .btn-primary:hover { background: #fff; }
+    .kb-ui .btn-primary:disabled,
+    .kb-ui .btn-primary:disabled:hover {
+      background: #ececec;
+      opacity: .4;
+      cursor: not-allowed;
+    }
+    .kb-ui .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+      color: #9a9a9a;
+      padding: 6px 10px;
+    }
+    .kb-ui .btn-ghost:hover { background: #1b1b1b; color: #f2f2f2; }
+    .kb-ui .profile-toggle { align-self: flex-start; }
+    .kb-ui .btn:focus-visible,
+    .kb-ui .chip:focus-visible,
+    .kb-ui .tab:focus-visible,
+    .kb-ui .input:focus-visible { outline: 2px solid #f2f2f2; outline-offset: 2px; }
+    .kb-ui .input {
+      width: 100%;
+      background: #1b1b1b;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 14px 16px;
+      outline: none;
+    }
+    .kb-ui .input::placeholder { color: #6b6b6b; }
+    .kb-ui .input:focus { border-color: #3a3a3a; }
+    .kb-ui textarea.input { resize: vertical; min-height: 96px; line-height: 1.55; }
+    .kb-ui .field-label {
+      font-size: 13px;
+      color: #9a9a9a;
+      margin: 0 0 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kb-ui .optional { color: #6b6b6b; font-weight: 400; }
+    .kb-ui .section {
+      border-top: 1px solid #2a2a2a;
+      padding-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .kb-ui .section-head h2 { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+    .kb-ui .section-head p { margin: 0; color: #9a9a9a; font-size: 13px; }
+    .kb-ui .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: #1b1b1b;
+      border: 1px solid #2a2a2a;
+      border-radius: 999px;
+      width: fit-content;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    .kb-ui .tab {
+      border: 0;
+      background: transparent;
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      color: #9a9a9a;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .kb-ui .tab:hover { color: #f2f2f2; }
+    .kb-ui .tab[aria-selected="true"] { background: #2c2c2c; color: #f2f2f2; }
+    .kb-ui .tab svg,
+    .kb-ui .profile-label svg,
+    .kb-ui .inspiration-toggle svg { width: 16px; height: 16px; display: block; flex: none; }
+    .kb-ui .profile-label svg { width: 15px; height: 15px; }
+    .kb-ui .tab-count {
+      font-size: 11px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #ececec;
+      color: #0a0a0a;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    .kb-ui .aspect-panel { display: flex; flex-direction: column; gap: 12px; }
+    .kb-ui .selected-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 28px; }
+    .kb-ui .selected-row .hint { color: #6b6b6b; font-size: 13px; }
+    .kb-ui .inspiration { background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 18px; overflow: hidden; }
+    .kb-ui .inspiration-toggle {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .kb-ui .inspiration-toggle .left { display: inline-flex; align-items: center; gap: 8px; }
+    .kb-ui .inspiration-toggle svg { color: #9a9a9a; }
+    .kb-ui .chevron { transition: transform .2s; }
+    .kb-ui .inspiration[data-open="true"] .chevron { transform: rotate(180deg); }
+    .kb-ui .inspiration-body { display: none; padding: 4px 16px 16px; flex-direction: column; gap: 14px; }
+    .kb-ui .inspiration[data-open="true"] .inspiration-body { display: flex; }
+    .kb-ui .attr-group { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .kb-ui .attr-group-label { font-size: 13px; color: #9a9a9a; }
+    .kb-ui .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .kb-ui .chip {
+      border: 1px solid #2a2a2a;
+      background: #1b1b1b;
+      color: #d6d6d6;
+      border-radius: 999px;
+      padding: 5px 12px;
       font-size: 13px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    [data-mirelo-kb-page] button.primary {
-      background: var(--foreground);
-      color: var(--background);
-      border-color: transparent;
+    .kb-ui .chip:hover { border-color: #3a3a3a; color: #f2f2f2; }
+    .kb-ui .chip[aria-pressed="true"] { background: #ececec; color: #0a0a0a; border-color: #ececec; }
+    .kb-ui .chip-static { cursor: default; }
+    .kb-ui .chip-static:hover { border-color: #2a2a2a; color: #d6d6d6; }
+    .kb-ui .chip-remove { background: #ececec; color: #0a0a0a; border-color: #ececec; padding-right: 8px; }
+    .kb-ui .chip-remove:hover { color: #0a0a0a; }
+    .kb-ui .chip svg { width: 12px; height: 12px; display: block; flex: none; }
+    .kb-ui .form-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .kb-ui .kb-actions { display: flex; gap: 8px; align-items: center; }
+    .kb-ui .editor-title { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+    .kb-ui .summary-text { font-size: 13px; color: #6b6b6b; }
+    .kb-ui .profile { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #2a2a2a; padding-top: 14px; }
+    .kb-ui .profile-row { display: grid; grid-template-columns: 1fr; gap: 6px; }
+    .kb-ui .profile-label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #9a9a9a; }
+    .kb-ui .profile-content { display: flex; flex-direction: column; gap: 6px; }
+    .kb-ui .profile-content p { margin: 0; color: #cfcfcf; font-size: 14px; white-space: pre-line; }
+    .kb-ui .profile-content .chip { font-size: 12px; padding: 3px 10px; }
+    .kb-ui .empty { color: #6b6b6b; font-size: 14px; margin: 0; }
+    @media (min-width: 640px) {
+      .kb-ui .attr-group { grid-template-columns: 180px 1fr; align-items: center; }
+      .kb-ui .profile-row { grid-template-columns: 140px 1fr; }
     }
   `;
   document.documentElement.append(style);
+
+  const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+
+  function aspectById(id) {
+    return ASPECTS.find((aspect) => aspect.id === id);
+  }
+
+  function aspectFilled(aspect) {
+    return aspect.description.trim().length > 0 || aspect.attributes.length > 0;
+  }
+
+  function aspectCount(aspect) {
+    return aspect.attributes.length + (aspect.description.trim() ? 1 : 0);
+  }
+
+  function filledAspects(sound) {
+    return ASPECTS.filter((aspect) => aspectFilled(sound[aspect.id]));
+  }
+
+  function knownAttribute(aspectId, tag) {
+    const aspect = aspectById(aspectId);
+    return !!aspect && Object.values(aspect.groups).some((tags) => tags.includes(tag));
+  }
+
+  function toggleAttribute(state, tag) {
+    const value = state.sound[state.activeAspect];
+    value.attributes = value.attributes.includes(tag)
+      ? value.attributes.filter((item) => item !== tag)
+      : [...value.attributes, tag];
+  }
+
+  function soundForSave(sound) {
+    return Object.fromEntries(ASPECTS.map((aspect) => [aspect.id, {
+      description: sound[aspect.id].description.trim(),
+      attributes: [...sound[aspect.id].attributes],
+    }]));
+  }
+
+  function normalizeAspect(aspect) {
+    const source = aspect && typeof aspect === "object" ? aspect : {};
+    const raw = Array.isArray(source.attributes) ? source.attributes : [];
+    const description = typeof source.description === "string"
+      ? source.description
+      : typeof source.text === "string"
+        ? source.text
+        : "";
+    return {
+      description,
+      attributes: [...new Set(raw.filter((item) => typeof item === "string"))],
+    };
+  }
+
+  function normalizeBase(base) {
+    if (!base || typeof base !== "object") return null;
+    const name = typeof base.name === "string" ? base.name.trim() : "";
+    if (!name) return null;
+    const legacy = typeof base.text === "string" ? base.text : "";
+    return {
+      id: String(base.id || crypto.randomUUID()),
+      name,
+      context: typeof base.context === "string" ? base.context : legacy,
+      sound: Object.fromEntries(ASPECTS.map((aspect) => [aspect.id, normalizeAspect(base.sound?.[aspect.id])])),
+    };
+  }
+
+  function baseNeedsMigration(base) {
+    if (!base || typeof base !== "object") return true;
+    if (typeof base.context !== "string" || "text" in base || !base.sound) return true;
+    return ASPECTS.some((aspect) => {
+      const value = base.sound[aspect.id];
+      return !value || typeof value.description !== "string" || !Array.isArray(value.attributes);
+    });
+  }
 
   function stored() {
     const current = localStorage.getItem(STORAGE_KEY);
@@ -223,7 +487,13 @@
     try {
       const parsed = JSON.parse(stored() || "");
       if (parsed && Array.isArray(parsed.bases)) {
-        return { bases: parsed.bases, selectedId: parsed.selectedId || null };
+        const bases = parsed.bases.map(normalizeBase).filter(Boolean);
+        const selectedId = bases.some((base) => base.id === parsed.selectedId) ? parsed.selectedId : null;
+        const data = { bases, selectedId };
+        if (parsed.bases.some(baseNeedsMigration) || parsed.selectedId !== selectedId) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        return data;
       }
     } catch {
       /* seed below */
@@ -233,7 +503,8 @@
         {
           id: "example",
           name: "Example",
-          text: "Prefer warm acoustic instruments. Avoid electronic drums and harsh distortion.",
+          context: "Prefer warm acoustic instruments. Avoid electronic drums and harsh distortion.",
+          sound: emptySound(),
         },
       ],
       selectedId: null,
@@ -250,6 +521,29 @@
   function selectedBase() {
     const data = load();
     return data.bases.find((base) => base.id === data.selectedId) || null;
+  }
+
+  function knowledgeBody(base) {
+    const parts = [];
+    const context = base.context.trim();
+    if (context) parts.push(context);
+    const blocks = [];
+    for (const aspect of ASPECTS) {
+      const value = base.sound[aspect.id];
+      if (!aspectFilled(value)) continue;
+      const lines = [`${aspect.label}:`];
+      if (value.description.trim()) lines.push(value.description.trim());
+      if (value.attributes.length) lines.push(`Attributes: ${value.attributes.join(", ")}`);
+      blocks.push(lines.join("\n"));
+    }
+    if (blocks.length) parts.push(blocks.join("\n\n"));
+    return parts.join("\n\n");
+  }
+
+  function knowledgePrefix(base) {
+    const body = knowledgeBody(base);
+    if (!body) return "";
+    return `[Knowledge base: ${base.name}]\n${body}\n---\n`;
   }
 
   function editorElement() {
@@ -278,20 +572,17 @@
     return true;
   }
 
-  function knowledgePrefix(base) {
-    return `[Knowledge base: ${base.name}]\n${base.text.trim()}\n---\n`;
-  }
-
   document.addEventListener(
     "click",
     (event) => {
       const button = event.target.closest?.('[data-testid="editor-assistant-send"]');
       if (!button || button.dataset.kbPass === "1") return;
       const base = selectedBase();
-      if (!base || !base.text.trim()) return;
+      const prefix = base && knowledgePrefix(base);
+      if (!prefix) return;
       const current = (editorElement()?.__lexicalTextContent || "").trim();
       if (!current || current.startsWith("[Knowledge base:")) return;
-      const next = knowledgePrefix(base) + current;
+      const next = prefix + current;
       const note = document.querySelector("[data-mirelo-kb-select] [data-kb-note]");
       if (next.length > LIMIT) {
         event.preventDefault();
@@ -381,37 +672,32 @@
       modal = document.createElement("div");
       modal.setAttribute("data-mirelo-kb-modal", "");
       modal.innerHTML = `
-        <form>
-          <h2>Add knowledge base</h2>
-          <input name="name" placeholder="Name" required />
-          <textarea name="text" placeholder="What should the assistant know?" required></textarea>
-          <div class="kb-actions">
-            <button type="button" data-kb-cancel>Cancel</button>
-            <button class="primary" type="submit">Add</button>
-          </div>
+        <form class="card kb-ui" data-kb-form data-kb-prefix="modal" aria-label="Add knowledge base">
+          <h2 class="editor-title">Add knowledge base</h2>
         </form>`;
+      const form = modal.querySelector("form");
+      bindEditor(form, createEditorState(), {
+        submitLabel: "Add",
+        showCancel: true,
+        onSave(base) {
+          const data = load();
+          data.bases.push(base);
+          data.selectedId = base.id;
+          expandedIds.add(base.id);
+          save(data);
+          closeModal();
+        },
+      });
       modal.addEventListener("click", (event) => {
         if (event.target === modal) closeModal();
       });
-      modal.querySelector("[data-kb-cancel]").addEventListener("click", closeModal);
-      modal.querySelector("form").addEventListener("submit", (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        const name = form.name.value.trim();
-        const text = form.text.value.trim();
-        if (!name || !text) return;
-        const data = load();
-        const id = crypto.randomUUID();
-        data.bases.push({ id, name, text });
-        data.selectedId = id;
-        save(data);
-        form.reset();
-        closeModal();
-      });
+      form.querySelector("[data-kb-cancel]").addEventListener("click", closeModal);
       document.body.append(modal);
     }
+    const form = modal.querySelector("form");
+    resetEditor(form, form.kbState);
     modal.hidden = false;
-    modal.querySelector("input").focus();
+    form.querySelector("[data-kb-name]").focus();
   }
 
   function menuButton(label, checked, onClick) {
@@ -490,69 +776,254 @@
     }));
   }
 
+  function cardHtml(base) {
+    const filled = filledAspects(base.sound);
+    const expanded = expandedIds.has(base.id);
+    const profileRows = filled.map((aspect) => {
+      const value = base.sound[aspect.id];
+      return `
+        <div class="profile-row">
+          <span class="profile-label">${aspect.icon}${esc(aspect.label)}</span>
+          <div class="profile-content">
+            ${value.description ? `<p>${esc(value.description)}</p>` : ""}
+            ${value.attributes.length ? `<div class="chips">${value.attributes.map((tag) => `<span class="chip chip-static">${esc(tag)}</span>`).join("")}</div>` : ""}
+          </div>
+        </div>`;
+    }).join("");
+
+    return `
+      <article class="card">
+        <div class="card-head">
+          <div class="card-copy">
+            <h3 class="card-title">${esc(base.name)}</h3>
+            ${base.context ? `<p class="card-body">${esc(base.context)}</p>` : ""}
+          </div>
+          <div class="card-actions">
+            <button type="button" class="btn" data-action="delete" data-id="${esc(base.id)}">Delete</button>
+          </div>
+        </div>
+        ${filled.length ? `
+          <button type="button" class="btn btn-ghost profile-toggle" data-action="toggle" data-id="${esc(base.id)}" aria-expanded="${expanded}">
+            ${expanded ? "Hide" : "Show"} sound profile · ${filled.map((aspect) => esc(aspect.label)).join(", ")}
+          </button>
+          ${expanded ? `<div class="profile">${profileRows}</div>` : ""}` : ""}
+      </article>`;
+  }
+
   function paintList(page) {
     const data = load();
     const list = page.querySelector("[data-kb-list]");
-    const signature = JSON.stringify(data.bases);
+    const signature = JSON.stringify({
+      bases: data.bases,
+      expanded: [...expandedIds],
+    });
     if (list.dataset.signature === signature) return;
     list.dataset.signature = signature;
-    list.replaceChildren();
-    if (data.bases.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "kb-empty";
-      empty.textContent = "No knowledge bases yet.";
-      list.append(empty);
-      return;
-    }
-    for (const base of data.bases) {
-      const card = document.createElement("article");
-      card.className = "kb-card";
-      const body = document.createElement("div");
-      const title = document.createElement("h2");
-      title.textContent = base.name;
-      const copy = document.createElement("p");
-      copy.textContent = base.text;
-      body.append(title, copy);
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.textContent = "Delete";
-      remove.addEventListener("click", () => {
-        const next = load();
-        next.bases = next.bases.filter((item) => item.id !== base.id);
-        if (next.selectedId === base.id) next.selectedId = null;
-        save(next);
-      });
-      card.append(body, remove);
-      list.append(card);
-    }
+    list.innerHTML = data.bases.length
+      ? data.bases.map(cardHtml).join("")
+      : '<p class="empty">No knowledge bases yet.</p>';
+  }
+
+  function editorMarkup(prefix, submitLabel, showCancel) {
+    return `
+      <div>
+        <label class="field-label" for="${prefix}-name">Name</label>
+        <input id="${prefix}-name" class="input" data-kb-name placeholder="Name" autocomplete="off" />
+      </div>
+      <div>
+        <label class="field-label" for="${prefix}-context">General context</label>
+        <textarea id="${prefix}-context" class="input" data-kb-context placeholder="What should the assistant know?"></textarea>
+      </div>
+      <div class="section">
+        <div class="section-head">
+          <h2>Sound profile <span class="optional">· optional</span></h2>
+          <p>Describe how speech, music and SFX should feel. Pick attributes for inspiration.</p>
+        </div>
+        <div class="tabs" role="tablist" data-aspect-tabs aria-label="Sound aspects"></div>
+        <div data-aspect-panel class="aspect-panel" role="tabpanel"></div>
+      </div>
+      <div class="form-footer">
+        <div class="kb-actions">
+          ${showCancel ? '<button type="button" class="btn" data-kb-cancel>Cancel</button>' : ""}
+          <button type="submit" class="btn btn-primary" data-kb-submit disabled>${submitLabel}</button>
+        </div>
+        <span class="summary-text" data-kb-summary></span>
+      </div>`;
+  }
+
+  function renderTabs(root, state) {
+    const prefix = root.dataset.kbPrefix;
+    const tabs = root.querySelector("[data-aspect-tabs]");
+    tabs.innerHTML = ASPECTS.map((aspect) => {
+      const count = aspectCount(state.sound[aspect.id]);
+      return `
+        <button type="button" class="tab" role="tab" id="${prefix}-tab-${aspect.id}" aria-selected="${state.activeAspect === aspect.id}" data-aspect="${aspect.id}">
+          ${aspect.icon}<span>${esc(aspect.label)}</span>${count ? `<span class="tab-count" aria-label="${count} items">${count}</span>` : ""}
+        </button>`;
+    }).join("");
+  }
+
+  function renderPanel(root, state) {
+    const prefix = root.dataset.kbPrefix;
+    const aspect = aspectById(state.activeAspect);
+    const value = state.sound[aspect.id];
+    const panel = root.querySelector("[data-aspect-panel]");
+    panel.setAttribute("aria-labelledby", `${prefix}-tab-${aspect.id}`);
+    panel.innerHTML = `
+      <div>
+        <label class="field-label" for="${prefix}-aspect">Describe ${esc(aspect.label.toLowerCase())}</label>
+        <textarea id="${prefix}-aspect" class="input" data-aspect-text placeholder="${esc(aspect.placeholder)}">${esc(value.description)}</textarea>
+      </div>
+      <div class="selected-row" aria-live="polite">
+        ${value.attributes.length
+          ? value.attributes.map((tag) => `<button type="button" class="chip chip-remove" data-remove="${esc(tag)}" aria-label="Remove ${esc(tag)}">${esc(tag)}${ICONS.x}</button>`).join("")
+          : '<span class="hint">No attributes selected</span>'}
+        ${value.attributes.length ? '<button type="button" class="btn btn-ghost" data-clear>Clear</button>' : ""}
+      </div>
+      <div class="inspiration" data-open="${state.inspirationOpen}">
+        <button type="button" class="inspiration-toggle" aria-expanded="${state.inspirationOpen}" data-toggle-inspiration>
+          <span class="left">${ICONS.sparkle}Get inspiration</span>${ICONS.chevron}
+        </button>
+        <div class="inspiration-body">
+          ${Object.entries(aspect.groups).map(([group, tags]) => `
+            <div class="attr-group" role="group" aria-label="${esc(group)}">
+              <span class="attr-group-label">${esc(group)}</span>
+              <div class="chips">
+                ${tags.map((tag) => `<button type="button" class="chip" aria-pressed="${value.attributes.includes(tag)}" data-attr="${esc(tag)}">${esc(tag)}</button>`).join("")}
+              </div>
+            </div>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function renderSummary(root, state) {
+    const filled = filledAspects(state.sound);
+    root.querySelector("[data-kb-summary]").textContent = filled.length
+      ? `Sound profile: ${filled.map((aspect) => aspect.label).join(", ")}`
+      : "";
+    root.querySelector("[data-kb-submit]").disabled = !state.name.trim();
+  }
+
+  function resetEditor(root, state) {
+    state.name = "";
+    state.context = "";
+    state.sound = emptySound();
+    state.activeAspect = "speech";
+    root.querySelector("[data-kb-name]").value = "";
+    root.querySelector("[data-kb-context]").value = "";
+    renderTabs(root, state);
+    renderPanel(root, state);
+    renderSummary(root, state);
+  }
+
+  function bindEditor(root, state, options) {
+    root.kbState = state;
+    root.insertAdjacentHTML("beforeend", editorMarkup(root.dataset.kbPrefix, options.submitLabel, options.showCancel));
+    root.querySelector("[data-kb-name]").value = state.name;
+    root.querySelector("[data-kb-context]").value = state.context;
+    root.querySelector("[data-kb-name]").addEventListener("input", (event) => {
+      state.name = event.target.value;
+      renderSummary(root, state);
+    });
+    root.querySelector("[data-kb-context]").addEventListener("input", (event) => {
+      state.context = event.target.value;
+    });
+    root.querySelector("[data-aspect-tabs]").addEventListener("click", (event) => {
+      const tab = event.target.closest(".tab");
+      if (!tab) return;
+      state.activeAspect = tab.dataset.aspect;
+      renderTabs(root, state);
+      renderPanel(root, state);
+      root.querySelector(`#${root.dataset.kbPrefix}-tab-${state.activeAspect}`)?.focus();
+    });
+    const panel = root.querySelector("[data-aspect-panel]");
+    panel.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const focusAttr = button.dataset.attr || button.dataset.remove || "";
+      if (button.dataset.attr) {
+        if (!knownAttribute(state.activeAspect, button.dataset.attr)) return;
+        toggleAttribute(state, button.dataset.attr);
+      } else if (button.dataset.remove) {
+        toggleAttribute(state, button.dataset.remove);
+      } else if (button.hasAttribute("data-clear")) {
+        state.sound[state.activeAspect].attributes = [];
+      } else if (button.hasAttribute("data-toggle-inspiration")) {
+        state.inspirationOpen = !state.inspirationOpen;
+      } else return;
+      renderTabs(root, state);
+      renderPanel(root, state);
+      renderSummary(root, state);
+      if (focusAttr) root.querySelector(`[data-attr="${CSS.escape(focusAttr)}"]`)?.focus();
+      else if (button.hasAttribute("data-toggle-inspiration") || button.hasAttribute("data-clear")) {
+        root.querySelector("[data-toggle-inspiration]")?.focus();
+      }
+    });
+    panel.addEventListener("input", (event) => {
+      if (!event.target.hasAttribute("data-aspect-text")) return;
+      state.sound[state.activeAspect].description = event.target.value;
+      renderTabs(root, state);
+      renderSummary(root, state);
+    });
+    root.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!state.name.trim()) return;
+      const base = {
+        id: crypto.randomUUID(),
+        name: state.name.trim(),
+        context: state.context.trim(),
+        sound: soundForSave(state.sound),
+      };
+      resetEditor(root, state);
+      options.onSave(base);
+    });
+    renderTabs(root, state);
+    renderPanel(root, state);
+    renderSummary(root, state);
   }
 
   function buildPage() {
     const page = document.createElement("div");
     page.setAttribute("data-mirelo-kb-page", "");
+    page.className = "kb-ui";
     page.innerHTML = `
       <div class="kb-wrap">
-        <h1>Knowledge</h1>
-        <p class="kb-sub">Notes the editor assistant receives with your prompt. Stored in this browser only.</p>
-        <div class="kb-list" data-kb-list></div>
-        <form>
-          <input name="name" placeholder="Name" required />
-          <textarea name="text" placeholder="What should the assistant know?" required></textarea>
-          <div class="kb-actions">
-            <button class="primary" type="submit">Add knowledge base</button>
-          </div>
-        </form>
+        <header class="page-header">
+          <h1>Knowledge</h1>
+          <p>Notes the editor assistant receives with your prompt. Stored in this browser only.</p>
+        </header>
+        <section class="kb-list" data-kb-list aria-label="Knowledge bases"></section>
+        <form class="card" data-kb-form data-kb-prefix="page" aria-label="Add knowledge base"></form>
       </div>`;
-    page.querySelector("form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const name = form.name.value.trim();
-      const text = form.text.value.trim();
-      if (!name || !text) return;
-      const data = load();
-      data.bases.push({ id: crypto.randomUUID(), name, text });
-      save(data);
-      form.reset();
+
+    page.querySelector("[data-kb-list]").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const id = button.dataset.id;
+      if (button.dataset.action === "delete") {
+        const data = load();
+        data.bases = data.bases.filter((item) => item.id !== id);
+        if (data.selectedId === id) data.selectedId = null;
+        expandedIds.delete(id);
+        save(data);
+        return;
+      }
+      if (button.dataset.action === "toggle") {
+        if (expandedIds.has(id)) expandedIds.delete(id);
+        else expandedIds.add(id);
+        paintList(page);
+      }
+    });
+
+    bindEditor(page.querySelector("[data-kb-form]"), pageState, {
+      submitLabel: "Add knowledge base",
+      showCancel: false,
+      onSave(base) {
+        const data = load();
+        data.bases.push(base);
+        expandedIds.add(base.id);
+        save(data);
+      },
     });
     return page;
   }
@@ -564,11 +1035,21 @@
     let page = inset.querySelector("[data-mirelo-kb-page]");
     if (!open) {
       page?.remove();
+      if (inset.dataset.kbPinned) {
+        inset.style.position = inset.dataset.kbPosition || "";
+        delete inset.dataset.kbPosition;
+        delete inset.dataset.kbPinned;
+      }
       for (const child of inset.querySelectorAll("[data-kb-hidden]")) {
         child.style.display = child.dataset.kbDisplay || "";
         child.removeAttribute("data-kb-hidden");
       }
       return;
+    }
+    if (!inset.dataset.kbPinned) {
+      inset.dataset.kbPinned = "1";
+      inset.dataset.kbPosition = inset.style.position;
+      if (getComputedStyle(inset).position === "static") inset.style.position = "relative";
     }
     if (!page) {
       for (const child of [...inset.children]) {

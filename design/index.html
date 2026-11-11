@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mirelo Studio – Knowledge</title>
+<style>
+  /* ===== Design tokens (match Mirelo Studio dark UI) ===== */
+  :root {
+    --bg: #000000;
+    --surface: #121212;        /* cards */
+    --surface-2: #1b1b1b;      /* inputs, chips */
+    --border: #2a2a2a;
+    --border-strong: #3a3a3a;
+    --text: #f2f2f2;
+    --text-muted: #9a9a9a;
+    --text-faint: #6b6b6b;
+    --primary: #ececec;        /* light pill button */
+    --primary-fg: #0a0a0a;
+    --radius-card: 24px;
+    --radius-input: 16px;
+    --radius-pill: 999px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font-family: "Geist", system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  button, input, textarea { font: inherit; color: inherit; }
+
+  .page { max-width: 880px; margin: 0 auto; padding: 40px 20px 64px; display: flex; flex-direction: column; gap: 20px; }
+  .page-header h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .page-header p { margin: 0; color: var(--text-muted); }
+
+  /* ===== Card ===== */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .card-title { font-weight: 600; font-size: 16px; margin: 0 0 4px; }
+  .card-body { color: #cfcfcf; margin: 0; white-space: pre-line; }
+  .card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  /* ===== Buttons ===== */
+  .btn { border-radius: var(--radius-pill); padding: 8px 16px; border: 1px solid var(--border-strong); background: var(--surface-2); cursor: pointer; transition: background .15s, border-color .15s; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { background: #242424; }
+  .btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); font-weight: 500; padding: 10px 20px; }
+  .btn-primary:hover { background: #ffffff; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--text-muted); padding: 6px 10px; }
+  .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+  .btn:focus-visible, .chip:focus-visible, .tab:focus-visible, .input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  /* ===== Inputs ===== */
+  .input { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-input); padding: 14px 16px; outline: none; transition: border-color .15s; }
+  .input::placeholder { color: var(--text-faint); }
+  .input:focus { border-color: var(--border-strong); }
+  textarea.input { resize: vertical; min-height: 96px; line-height: 1.55; }
+
+  .field-label { font-size: 13px; color: var(--text-muted); margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; }
+  .optional { color: var(--text-faint); }
+
+  /* ===== Sound profile section ===== */
+  .section { border-top: 1px solid var(--border); padding-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .section-head h2 { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+  .section-head p { margin: 0; color: var(--text-muted); font-size: 13px; }
+
+  /* Segmented tabs */
+  .tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-pill); width: fit-content; max-width: 100%; overflow-x: auto; }
+  .tab { border: 0; background: transparent; border-radius: var(--radius-pill); padding: 8px 14px; cursor: pointer; color: var(--text-muted); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; transition: background .15s, color .15s; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { background: #2c2c2c; color: var(--text); }
+  .tab svg { width: 16px; height: 16px; }
+  .tab-count { font-size: 11px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--primary); color: var(--primary-fg); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+
+  /* Aspect panel */
+  .aspect-panel { display: flex; flex-direction: column; gap: 12px; }
+  .selected-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 28px; }
+  .selected-row .hint { color: var(--text-faint); font-size: 13px; }
+
+  .inspiration { background: #0d0d0d; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+  .inspiration-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: transparent; border: 0; cursor: pointer; font-size: 14px; }
+  .inspiration-toggle .left { display: inline-flex; align-items: center; gap: 8px; }
+  .inspiration-toggle svg { width: 16px; height: 16px; color: var(--text-muted); transition: transform .2s; }
+  .inspiration[data-open="true"] .chevron { transform: rotate(180deg); }
+  .inspiration-body { display: none; padding: 4px 16px 16px; flex-direction: column; gap: 14px; }
+  .inspiration[data-open="true"] .inspiration-body { display: flex; }
+
+  .attr-group { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 640px) { .attr-group { grid-template-columns: 180px 1fr; align-items: center; } }
+  .attr-group-label { font-size: 13px; color: var(--text-muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* Chip */
+  .chip { border: 1px solid var(--border); background: var(--surface-2); color: #d6d6d6; border-radius: var(--radius-pill); padding: 5px 12px; font-size: 13px; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .chip[aria-pressed="true"] { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+  .chip-static { cursor: default; }
+  .chip-remove { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); padding-right: 8px; }
+  .chip-remove svg { width: 12px; height: 12px; }
+
+  .form-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .summary-text { font-size: 13px; color: var(--text-faint); }
+
+  /* ===== Saved card: profile summary ===== */
+  .profile { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .profile-row { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  @media (min-width: 640px) { .profile-row { grid-template-columns: 140px 1fr; } }
+  .profile-label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+  .profile-label svg { width: 15px; height: 15px; }
+  .profile-content { display: flex; flex-direction: column; gap: 6px; }
+  .profile-content p { margin: 0; color: #cfcfcf; font-size: 14px; }
+  .profile-content .chips .chip { font-size: 12px; padding: 3px 10px; }
+
+  .empty { color: var(--text-faint); font-size: 14px; }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="page-header">
+    <h1>Knowledge</h1>
+    <p>Notes the editor assistant receives with your prompt. Stored in this browser only.</p>
+  </header>
+
+  <section id="knowledge-list" aria-label="Knowledge bases" style="display:flex;flex-direction:column;gap:20px"></section>
+
+  <!-- ===== KnowledgeForm ===== -->
+  <form id="knowledge-form" class="card" aria-label="Add knowledge base">
+    <div>
+      <label class="field-label" for="kb-name">Name</label>
+      <input id="kb-name" class="input" placeholder="Name" autocomplete="off" />
+    </div>
+    <div>
+      <label class="field-label" for="kb-general">General context</label>
+      <textarea id="kb-general" class="input" placeholder="What should the assistant know?"></textarea>
+    </div>
+
+    <!-- ===== SoundProfileEditor ===== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>Sound profile <span class="optional">· optional</span></h2>
+        <p>Describe how speech, music and SFX should feel. Pick attributes for inspiration.</p>
+      </div>
+
+      <div class="tabs" role="tablist" id="aspect-tabs" aria-label="Sound aspects"></div>
+      <div id="aspect-panel" class="aspect-panel" role="tabpanel"></div>
+    </div>
+
+    <div class="form-footer">
+      <button type="submit" class="btn btn-primary" id="submit-btn">Add knowledge base</button>
+      <span class="summary-text" id="form-summary"></span>
+    </div>
+  </form>
+</main>
+
+<script>
+/* ===== Icons ===== */
+const ICONS = {
+  speech: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><path d="M12 17v5"/></svg>',
+  music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+  sfx: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h3l3-8 4 16 3-8h7"/></svg>',
+  sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg>',
+  chevron: '<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+};
+
+/* ===== Aspect + attribute config ===== */
+const ASPECTS = [
+  {
+    id: "speech", label: "Speech", icon: ICONS.speech,
+    placeholder: "e.g. A warm, friendly narrator who speaks like a trusted friend…",
+    groups: {
+      "Voice Characteristics": ["Deep", "High-pitched", "Warm", "Breathy", "Raspy"],
+      "Vocal Delivery": ["Conversational", "Narrative", "Instructional", "Theatrical", "Whispered"],
+      "Emotion & Tone": ["Calm", "Joyful", "Confident", "Serious", "Empathetic"],
+      "Pace & Rhythm": ["Slow", "Fast", "Steady", "Rhythmic", "Deliberate"],
+      "Articulation & Prosody": ["Clear", "Precise", "Monotone", "Expressive", "Emphatic"],
+    },
+  },
+  {
+    id: "music", label: "Sound & Music", icon: ICONS.music,
+    placeholder: "e.g. Soft acoustic textures, light percussion, never overpowering the voice…",
+    groups: {
+      "Mood & Atmosphere": ["Peaceful", "Mysterious", "Tense", "Uplifting", "Melancholic"],
+      "Timbre & Texture": ["Warm", "Bright", "Dark", "Smooth", "Gritty"],
+      "Rhythm & Tempo": ["Slow", "Fast", "Pulsating", "Steady", "Irregular"],
+      "Dynamics & Intensity": ["Subtle", "Gentle", "Powerful", "Intense", "Restrained"],
+      "Style & Aesthetics": ["Organic", "Electronic", "Cinematic", "Ambient", "Experimental"],
+    },
+  },
+  {
+    id: "sfx", label: "SFX", icon: ICONS.sfx,
+    placeholder: "e.g. Short, rounded UI sounds; cartoonish but never harsh…",
+    groups: {
+      "Realism & Stylization": ["Realistic", "Hyperrealistic", "Stylized", "Abstract", "Synthetic"],
+      "Intensity & Presence": ["Subtle", "Restrained", "Balanced", "Punchy", "Exaggerated"],
+      "Texture & Character": ["Clean", "Organic", "Polished", "Gritty", "Minimal"],
+    },
+  },
+];
+
+/* ===== State ===== */
+const emptyProfile = () => Object.fromEntries(ASPECTS.map(a => [a.id, { text: "", attributes: [] }]));
+
+const state = {
+  knowledgeBases: [
+    {
+      id: 1, name: "Dinositter",
+      general: "Dinositter is a babysitter platform that helps parents find reliable, loving care for their children. The generated sounds should be playful and warm.",
+      profile: {
+        speech: { text: "Friendly, like a favourite aunt reading a bedtime story.", attributes: ["Warm", "Conversational", "Joyful"] },
+        music: { text: "", attributes: ["Uplifting", "Bright", "Organic"] },
+        sfx: { text: "Bouncy, rounded UI sounds.", attributes: ["Stylized", "Punchy", "Clean"] },
+      },
+      expanded: true,
+    },
+    {
+      id: 2, name: "Fitti",
+      general: "Fitti is a health app that helps software engineers to get relief from their neck- and back pain as well as headaches.\nThe sounds should be calm. Human speech should be natural and warm.",
+      profile: {
+        speech: { text: "", attributes: ["Warm", "Instructional", "Calm", "Slow"] },
+        music: { text: "Gentle ambient pads for stretching sessions.", attributes: ["Peaceful", "Smooth", "Ambient"] },
+        sfx: { text: "", attributes: [] },
+      },
+      expanded: false,
+    },
+  ],
+  draft: { name: "", general: "", profile: emptyProfile() },
+  activeAspect: "speech",
+  inspirationOpen: true,
+};
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const aspectFilled = (p) => p.text.trim().length > 0 || p.attributes.length > 0;
+
+/* ===== KnowledgeCard ===== */
+function renderList() {
+  const list = $("#knowledge-list");
+  if (!state.knowledgeBases.length) { list.innerHTML = '<p class="empty">No knowledge bases yet.</p>'; return; }
+
+  list.innerHTML = state.knowledgeBases.map(kb => {
+    const filled = ASPECTS.filter(a => aspectFilled(kb.profile[a.id]));
+    const profileRows = filled.map(a => {
+      const p = kb.profile[a.id];
+      return `
+        <div class="profile-row">
+          <span class="profile-label">${a.icon}${a.label}</span>
+          <div class="profile-content">
+            ${p.text ? `<p>${esc(p.text)}</p>` : ""}
+            ${p.attributes.length ? `<div class="chips">${p.attributes.map(t => `<span class="chip chip-static">${esc(t)}</span>`).join("")}</div>` : ""}
+          </div>
+        </div>`;
+    }).join("");
+
+    return `
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h3 class="card-title">${esc(kb.name)}</h3>
+            <p class="card-body">${esc(kb.general)}</p>
+          </div>
+          <div class="card-actions">
+            <button class="btn" data-action="delete" data-id="${kb.id}">Delete</button>
+          </div>
+        </div>
+        ${filled.length ? `
+          <button class="btn btn-ghost" style="align-self:flex-start" data-action="toggle" data-id="${kb.id}" aria-expanded="${kb.expanded}">
+            ${kb.expanded ? "Hide" : "Show"} sound profile · ${filled.map(a => a.label).join(", ")}
+          </button>
+          ${kb.expanded ? `<div class="profile">${profileRows}</div>` : ""}` : ""}
+      </article>`;
+  }).join("");
+}
+
+$("#knowledge-list").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  if (btn.dataset.action === "delete") state.knowledgeBases = state.knowledgeBases.filter(k => k.id !== id);
+  if (btn.dataset.action === "toggle") { const kb = state.knowledgeBases.find(k => k.id === id); kb.expanded = !kb.expanded; }
+  renderList();
+});
+
+/* ===== AspectTabs ===== */
+function renderTabs() {
+  $("#aspect-tabs").innerHTML = ASPECTS.map(a => {
+    const p = state.draft.profile[a.id];
+    const count = p.attributes.length + (p.text.trim() ? 1 : 0);
+    return `
+      <button type="button" class="tab" role="tab" id="tab-${a.id}" aria-selected="${state.activeAspect === a.id}" data-aspect="${a.id}">
+        ${a.icon}<span>${a.label}</span>${count ? `<span class="tab-count" aria-label="${count} items">${count}</span>` : ""}
+      </button>`;
+  }).join("");
+}
+
+$("#aspect-tabs").addEventListener("click", (e) => {
+  const tab = e.target.closest(".tab");
+  if (!tab) return;
+  state.activeAspect = tab.dataset.aspect;
+  renderTabs(); renderPanel();
+});
+
+/* ===== AspectPanel (textarea + selected attributes + InspirationDrawer) ===== */
+function renderPanel() {
+  const aspect = ASPECTS.find(a => a.id === state.activeAspect);
+  const p = state.draft.profile[aspect.id];
+  const panel = $("#aspect-panel");
+  panel.setAttribute("aria-labelledby", `tab-${aspect.id}`);
+
+  panel.innerHTML = `
+    <div>
+      <label class="field-label" for="aspect-text">Describe ${aspect.label.toLowerCase()}</label>
+      <textarea id="aspect-text" class="input" placeholder="${esc(aspect.placeholder)}">${esc(p.text)}</textarea>
+    </div>
+
+    <div class="selected-row" aria-live="polite">
+      ${p.attributes.length
+        ? p.attributes.map(t => `<button type="button" class="chip chip-remove" data-remove="${esc(t)}" aria-label="Remove ${esc(t)}">${esc(t)}${ICONS.x}</button>`).join("")
+        : `<span class="hint">No attributes selected</span>`}
+      ${p.attributes.length ? `<button type="button" class="btn btn-ghost" data-clear>Clear</button>` : ""}
+    </div>
+
+    <div class="inspiration" data-open="${state.inspirationOpen}">
+      <button type="button" class="inspiration-toggle" aria-expanded="${state.inspirationOpen}" data-toggle-inspiration>
+        <span class="left">${ICONS.sparkle}Get inspiration</span>${ICONS.chevron}
+      </button>
+      <div class="inspiration-body">
+        ${Object.entries(aspect.groups).map(([group, attrs]) => `
+          <div class="attr-group" role="group" aria-label="${esc(group)}">
+            <span class="attr-group-label">${esc(group)}</span>
+            <div class="chips">
+              ${attrs.map(t => `<button type="button" class="chip" aria-pressed="${p.attributes.includes(t)}" data-attr="${esc(t)}">${esc(t)}</button>`).join("")}
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+
+const toggleAttribute = (tag) => {
+  const p = state.draft.profile[state.activeAspect];
+  p.attributes = p.attributes.includes(tag) ? p.attributes.filter(t => t !== tag) : [...p.attributes, tag];
+};
+
+$("#aspect-panel").addEventListener("click", (e) => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  if (t.dataset.attr) toggleAttribute(t.dataset.attr);
+  else if (t.dataset.remove) toggleAttribute(t.dataset.remove);
+  else if (t.hasAttribute("data-clear")) state.draft.profile[state.activeAspect].attributes = [];
+  else if (t.hasAttribute("data-toggle-inspiration")) state.inspirationOpen = !state.inspirationOpen;
+  else return;
+  renderTabs(); renderPanel(); renderSummary();
+});
+
+$("#aspect-panel").addEventListener("input", (e) => {
+  if (e.target.id !== "aspect-text") return;
+  state.draft.profile[state.activeAspect].text = e.target.value;
+  renderTabs(); renderSummary();
+});
+
+/* ===== Form ===== */
+function renderSummary() {
+  const filled = ASPECTS.filter(a => aspectFilled(state.draft.profile[a.id]));
+  $("#form-summary").textContent = filled.length ? `Sound profile: ${filled.map(a => a.label).join(", ")}` : "";
+  $("#submit-btn").disabled = !state.draft.name.trim();
+}
+
+$("#kb-name").addEventListener("input", (e) => { state.draft.name = e.target.value; renderSummary(); });
+$("#kb-general").addEventListener("input", (e) => { state.draft.general = e.target.value; });
+
+$("#knowledge-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!state.draft.name.trim()) return;
+  state.knowledgeBases.push({ id: Date.now(), ...structuredClone(state.draft), expanded: true });
+  state.draft = { name: "", general: "", profile: emptyProfile() };
+  state.activeAspect = "speech";
+  $("#kb-name").value = ""; $("#kb-general").value = "";
+  renderList(); renderTabs(); renderPanel(); renderSummary();
+});
+
+renderList(); renderTabs(); renderPanel(); renderSummary();
+</script>
+</body>
+</html>

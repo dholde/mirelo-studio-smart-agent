@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mirelo Studio Knowledge Base",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Named knowledge bases for the Mirelo Studio assistant.",
   "host_permissions": ["https://mirelo.ai/*"],
   "web_accessible_resources": [

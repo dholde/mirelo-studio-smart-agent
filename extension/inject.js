@@ -1,8 +1,4 @@
-fetch(chrome.runtime.getURL("content.js"))
-  .then((response) => response.text())
-  .then((code) => {
-    const script = document.createElement("script");
-    script.textContent = code;
-    document.documentElement.append(script);
-    script.remove();
-  });
+const script = document.createElement("script");
+script.src = chrome.runtime.getURL("content.js");
+script.onload = () => script.remove();
+document.documentElement.append(script);

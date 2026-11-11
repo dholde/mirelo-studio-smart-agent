@@ -6,10 +6,10 @@ This is a showcase of how that feature could look. It is not a production part o
 
 ## Features
 
-- A **Knowledge** item in the sidebar. The page lists your bases and lets you add or delete them. Each base has a name and the notes the assistant should follow.
+- A **Knowledge** item in the sidebar. The page lists your bases and lets you add or delete them. Each base has a name, general context, and an optional sound profile for speech, music, and sound effects. The profile is free text plus attributes you can pick for inspiration.
 - A selector above the editor assistant. It reads **Select knowledge base** until you pick one.
 - **None** clears the selection and closes the menu. **Add +** opens a dialog in the center of the page. Saving there creates the base and selects it.
-- The next prompt includes the selected notes, with the base name, and then your own text. Choose **None** when you do not want them included.
+- The next prompt includes the selected base (its name, general context, and any filled sound profile) followed by your own text. Choose **None** when you do not want the base included.
 - Notes are stored in this browser only.
 
 Keep the notes short. Studio refuses a message longer than 4000 characters, and the notes count toward that limit. Sending still goes through the Studio assistant, so it uses credits the same way a normal prompt does.
@@ -31,7 +31,14 @@ Notes are kept in `localStorage`. When a base is selected, a send places this at
 
 ```
 [Knowledge base: Name]
-the notes
+general context
+
+Speech:
+how the voice should feel
+Attributes: Warm, Calm
+
+Sound & Music:
+Attributes: Ambient, Gentle
 ---
 your prompt
 ```
