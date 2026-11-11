@@ -6,35 +6,35 @@ This is a showcase of how that feature could look. It is not a production part o
 
 ## Features
 
-### Adding knowledge bases
+<h3><img src="resources/feature-add.svg" width="22" height="22" alt="" align="absmiddle"> &nbsp;&nbsp;Adding knowledge bases</h3>
 
 Create knowledge bases that can be used across projects:
 
-<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;General description and instructions about the project
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;General description and instructions about the project
 
-<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;Specific descriptions for SFX, speech, and music
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Specific descriptions for SFX, speech, and music
 
-<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;Get inspiration: build prompts from ready-made components for SFX, speech, and music
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Get inspiration: build prompts from ready-made components for SFX, speech, and music
 
-![Adding a knowledge base](resources/create-kb.gif)
+<p><img src="resources/create-kb-window.gif" width="100%" alt="Adding a knowledge base"></p>
 
-### Produce consistent sounds
+<h3><img src="resources/feature-chat.svg" width="22" height="22" alt="" align="absmiddle"> &nbsp;&nbsp;Create knowledge bases directly from Chat</h3>
 
-<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;Agent Chat
+Conveniently create knowledge bases on the go:
 
-<img src="resources/check.svg" width="20" height="20" alt="" align="absmiddle"> &nbsp;&nbsp;The agent will use the information as always-on context for consistent sound generation
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Create knowledge bases while chatting with the Mirelo Assistant
 
-![Using a knowledge base in agent chat](resources/use-kb-in-chat.gif)
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;View knowledge base contents while chatting with the Assistant
 
-### Selecting a base
+<p><img src="resources/create-kb-from-chat-window.gif" width="100%" alt="Creating a knowledge base from chat"></p>
 
-A selector above the editor assistant reads **Select knowledge base** until you pick one. **None** clears the selection and closes the menu. **Add +** opens the same form in a dialog. Saving there creates the base and selects it.
+<h3><img src="resources/feature-sound.svg" width="22" height="22" alt="" align="absmiddle"> &nbsp;&nbsp;Produce consistent sounds</h3>
 
-The next prompt includes the selected base (its name, general context, and any filled sound profile) followed by your own text. Choose **None** when you do not want the base included.
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Select the knowledge base in your chats with the Mirelo Assistant
 
-Notes are stored in this browser only.
+&emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;The Mirelo Assistant will use the information as always-on context for consistent sound generation
 
-Keep the notes short. Studio refuses a message longer than 4000 characters, and the notes count toward that limit. Sending still goes through the Studio assistant, so it uses credits the same way a normal prompt does.
+<p><img src="resources/use-kb-in-chat-window.gif" width="100%" alt="Using a knowledge base in Mirelo Assistant chat"></p>
 
 ## Install
 

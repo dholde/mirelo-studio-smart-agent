@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
-  <rect width="20" height="20" rx="6" fill="#F4F4F5"/>
-  <path d="M6 10.2 8.4 12.6 14 7.2" stroke="#18181B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="11" viewBox="3.2 4.7 13.8 11.2" fill="none">
+  <style>
+    .mark { stroke: #4ADE80; }
+    @media (prefers-color-scheme: light) {
+      .mark { stroke: #16A34A; }
+    }
+  </style>
+  <path class="mark" d="M4.5 10.4 8.2 14.2 15.5 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
