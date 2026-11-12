@@ -4,9 +4,11 @@ A Chrome plugin for named knowledge bases for the [Mirelo Studio](https://mirelo
 
 This is a showcase of how that feature could look:
 
-- You can create knowledge bases that act as a baseline for consistent sound generation.
-- You can use the knowledge bases across projects for company-wide consistency.
-- You can let the Prompt Engineer analyze your prompt and optimize it for efficiency and accuracy.
+<img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can create knowledge bases that act as a baseline for consistent sound generation.
+
+<img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can use the knowledge bases across projects for company-wide consistency.
+
+<img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can let the Prompt Engineer analyze your prompt and optimize it for efficiency and accuracy.
 
 This project is not a production-ready extension. It is meant to give an idea of how such a feature could look. Your notes stay in the browser, and a selected knowledge base is sent with the assistant prompt.
 
