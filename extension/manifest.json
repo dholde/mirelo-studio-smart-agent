@@ -3,7 +3,15 @@
   "name": "Mirelo Studio Knowledge Base",
   "version": "0.3.0",
   "description": "Named knowledge bases for the Mirelo Studio assistant.",
-  "host_permissions": ["https://mirelo.ai/*"],
+  "permissions": ["storage"],
+  "host_permissions": ["https://mirelo.ai/*", "https://api.openai.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "web_accessible_resources": [
     {
       "resources": ["content.js"],

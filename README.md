@@ -83,6 +83,8 @@ your prompt
 
 Studio sends the editor's own draft, so the notes are written through that editor. The extension does not make its own assistant request, and it does not read sign-in tokens.
 
+Prompt Engineer calls OpenAI from the extension service worker. Save your own API key in the extension options. The key is not in this repo, and the Studio page never receives it. With no key saved, optimize asks you to add one.
+
 It finds the assistant from the input, the composer, and the send button. A Studio update that renames those will need a matching change here.
 
 ## Technical Considerations

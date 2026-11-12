@@ -5,14 +5,18 @@
   const STORAGE_KEY = "mirelo-knowledge";
   const LIMIT = 4000;
   const PLACEHOLDER = "Select knowledge base";
-  const OPTIMIZE_STEPS = [
-    "Analyzing prompt ...",
-    "Correcting prompt ...",
-    "Generating optimized prompt ...",
-  ];
-  const OPTIMIZE_ORIGINAL = "Make some nice sounds for this video. Kids are playing outside, maybe a playground or a park, and it should feel happy and playful and also really happy and fun. I want background music that is cinematic and epic, but also quiet, small, and acoustic. Add sound effects of real children screaming, and also soft cute taps in the background. Use the knowledge base, unless something else sounds better.";
-  const OPTIMIZE_IMPROVEMENTS = "The given prompt is vague, repeats itself, and asks for opposite things at once. I would suggest naming the scene, the sounds, and one mood. Take a look at the improved prompt.";
-  const OPTIMIZE_PROMPT = "Kids playing happily on a playground. Using the knowledge base, create the sound effects and background music.\nSoft swings, light footsteps, and a gentle acoustic bed.\nPlayful and warm, never loud.";
+  const PAGE_SOURCE = "mirelo-knowledge-page";
+  const EXTENSION_SOURCE = "mirelo-knowledge-extension";
+  const OPTIMIZE_FIELDS = new Set(["context", "speech", "music", "sfx"]);
+  const OPTIMIZE_ERRORS = {
+    empty: "Write a prompt first.",
+    "too-long": `Over ${LIMIT} characters. Shorten the prompt.`,
+    "missing-key": "Add your OpenAI API key in the extension options.",
+    auth: "The saved API key was rejected. Replace it in the extension options.",
+    rate: "OpenAI is rate limiting requests. Try again in a moment.",
+    busy: "An optimization is already running.",
+    failed: "The OpenAI request failed.",
+  };
 
   const ICONS = {
     speech: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><path d="M12 17v5"/></svg>',
@@ -390,6 +394,15 @@
       flex-wrap: wrap;
       gap: 8px;
     }
+    [data-optimize-modal] [data-optimize-error] {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 28px 8px;
+      text-align: center;
+    }
+    [data-optimize-modal] [data-optimize-error] p { margin: 0; color: #cfcfcf; }
     [data-optimize-modal] [data-optimize-result] {
       display: flex;
       flex-direction: column;
@@ -941,8 +954,13 @@
     if (modal) modal.hidden = true;
   }
 
-  let optimizeTimer = 0;
   let optimizeTarget = null;
+
+  function optimizeField(field, root) {
+    if (field.hasAttribute("data-kb-context")) return "context";
+    const aspectId = root.kbState?.activeAspect;
+    return OPTIMIZE_FIELDS.has(aspectId) ? aspectId : "";
+  }
 
   function ensureOptimizeModal() {
     let modal = document.querySelector("[data-optimize-modal]");
@@ -955,20 +973,27 @@
       <div class="card optimize-dialog" role="dialog" aria-modal="true" aria-label="Optimize prompt">
         <div class="optimize-loading" data-optimize-loading>
           <div class="optimize-spinner" aria-hidden="true"></div>
-          <p data-optimize-status aria-live="polite"></p>
+          <p data-optimize-status aria-live="polite">Analyzing prompt ...</p>
+        </div>
+        <div data-optimize-error hidden>
+          <p data-optimize-error-text></p>
+          <div class="optimize-actions">
+            <button type="button" class="btn btn-primary" data-optimize-action="options">Open extension options</button>
+            <button type="button" class="btn" data-optimize-action="close">Close</button>
+          </div>
         </div>
         <div data-optimize-result hidden>
           <div>
             <p class="field-label">Original prompt</p>
-            <textarea class="input optimize-readonly" readonly rows="5">${esc(OPTIMIZE_ORIGINAL)}</textarea>
+            <textarea class="input optimize-readonly" data-optimize-original readonly rows="5"></textarea>
           </div>
           <div>
             <p class="field-label">Suggested improvements</p>
-            <textarea class="input optimize-readonly" readonly rows="4">${esc(OPTIMIZE_IMPROVEMENTS)}</textarea>
+            <textarea class="input optimize-readonly" data-optimize-improvements readonly rows="4"></textarea>
           </div>
           <div>
             <p class="field-label">Optimized Prompt</p>
-            <textarea class="input optimize-readonly" readonly rows="4">${esc(OPTIMIZE_PROMPT)}</textarea>
+            <textarea class="input optimize-readonly" data-optimize-prompt readonly rows="4"></textarea>
           </div>
           <div class="optimize-actions">
             <button type="button" class="btn btn-primary" data-optimize-action="accept">Accept optimized prompt</button>
@@ -983,56 +1008,96 @@
       }
       const action = event.target.closest("[data-optimize-action]");
       if (!action || !modal.contains(action)) return;
+      if (action.dataset.optimizeAction === "options") {
+        window.postMessage({ source: PAGE_SOURCE, type: "open-options" }, "https://mirelo.ai");
+        return;
+      }
       closeOptimize(action.dataset.optimizeAction === "accept");
     });
     document.body.append(modal);
     return modal;
   }
 
+  function showOptimizeError(modal, code) {
+    modal.querySelector("[data-optimize-loading]").hidden = true;
+    modal.querySelector("[data-optimize-result]").hidden = true;
+    const error = modal.querySelector("[data-optimize-error]");
+    error.hidden = false;
+    error.querySelector("[data-optimize-error-text]").textContent = OPTIMIZE_ERRORS[code] || OPTIMIZE_ERRORS.failed;
+    const options = error.querySelector("[data-optimize-action='options']");
+    options.hidden = code !== "missing-key" && code !== "auth";
+    (options.hidden ? error.querySelector("[data-optimize-action='close']") : options).focus();
+  }
+
+  function showOptimizeResult(modal, original, improvements, prompt) {
+    modal.querySelector("[data-optimize-loading]").hidden = true;
+    modal.querySelector("[data-optimize-error]").hidden = true;
+    const result = modal.querySelector("[data-optimize-result]");
+    result.hidden = false;
+    result.querySelector("[data-optimize-original]").value = original;
+    result.querySelector("[data-optimize-improvements]").value = improvements;
+    result.querySelector("[data-optimize-prompt]").value = prompt;
+    result.querySelector("[data-optimize-action='accept']")?.focus();
+  }
+
   function openOptimize(root, field, trigger) {
     const modal = ensureOptimizeModal();
-    window.clearTimeout(optimizeTimer);
+    const loading = modal.querySelector("[data-optimize-loading]");
+    if (optimizeTarget && !modal.hidden && !loading.hidden) return;
+    const text = field.value.trim();
+    const fieldId = optimizeField(field, root);
+    const requestId = crypto.randomUUID();
     optimizeTarget = {
       root,
       trigger,
       kind: field.hasAttribute("data-kb-context") ? "context" : "aspect",
       aspectId: root.kbState?.activeAspect,
+      requestId,
+      text,
+      prompt: "",
     };
-    const status = modal.querySelector("[data-optimize-status]");
-    modal.querySelector("[data-optimize-loading]").hidden = false;
     modal.querySelector("[data-optimize-result]").hidden = true;
-    let step = 0;
-    status.textContent = OPTIMIZE_STEPS[0];
+    modal.querySelector("[data-optimize-error]").hidden = true;
     modal.hidden = false;
-    const advance = () => {
-      step += 1;
-      if (step < OPTIMIZE_STEPS.length) {
-        status.textContent = OPTIMIZE_STEPS[step];
-        optimizeTimer = window.setTimeout(advance, 2100);
-        return;
-      }
-      modal.querySelector("[data-optimize-loading]").hidden = true;
-      modal.querySelector("[data-optimize-result]").hidden = false;
-      modal.querySelector("[data-optimize-action='accept']")?.focus();
-    };
-    optimizeTimer = window.setTimeout(advance, 2100);
+    if (!text) {
+      showOptimizeError(modal, "empty");
+      return;
+    }
+    if (text.length > LIMIT) {
+      showOptimizeError(modal, "too-long");
+      return;
+    }
+    if (!fieldId) {
+      showOptimizeError(modal, "failed");
+      return;
+    }
+    modal.querySelector("[data-optimize-loading]").hidden = false;
+    modal.querySelector("[data-optimize-status]").textContent = "Analyzing prompt ...";
+    window.postMessage({
+      source: PAGE_SOURCE,
+      type: "optimize",
+      requestId,
+      text,
+      field: fieldId,
+    }, "https://mirelo.ai");
   }
 
   function applyOptimized(target) {
+    const prompt = target.prompt;
     const state = target.root?.kbState;
-    if (!state) return;
+    if (!prompt || !state) return;
     if (target.kind === "context") {
-      state.context = OPTIMIZE_PROMPT;
+      state.context = prompt;
       const live = target.root.querySelector("[data-kb-context]");
-      if (live) live.value = OPTIMIZE_PROMPT;
+      if (live) live.value = prompt;
       return;
     }
     const aspect = state.sound[target.aspectId];
     if (!aspect) return;
-    aspect.description = OPTIMIZE_PROMPT;
+    aspect.description = prompt;
     if (state.activeAspect === target.aspectId) {
       const live = target.root.querySelector("[data-aspect-text]");
-      if (live) live.value = OPTIMIZE_PROMPT;
+      if (live) live.value = prompt;
     }
     renderTabs(target.root, state);
     renderSummary(target.root, state);
@@ -1041,7 +1106,6 @@
   function closeOptimize(accept) {
     const modal = document.querySelector("[data-optimize-modal]");
     if (!modal || modal.hidden) return false;
-    window.clearTimeout(optimizeTimer);
     if (accept && optimizeTarget) applyOptimized(optimizeTarget);
     modal.hidden = true;
     const trigger = optimizeTarget?.trigger;
@@ -1049,6 +1113,20 @@
     if (trigger?.isConnected) trigger.focus();
     return true;
   }
+
+  window.addEventListener("message", (event) => {
+    if (event.source !== window || event.origin !== "https://mirelo.ai") return;
+    const data = event.data;
+    if (!data || data.source !== EXTENSION_SOURCE || data.type !== "optimize-result") return;
+    const modal = document.querySelector("[data-optimize-modal]");
+    if (!modal || modal.hidden || !optimizeTarget || data.requestId !== optimizeTarget.requestId) return;
+    if (data.ok && data.prompt && data.improvements) {
+      optimizeTarget.prompt = data.prompt;
+      showOptimizeResult(modal, optimizeTarget.text, data.improvements, data.prompt);
+      return;
+    }
+    showOptimizeError(modal, data.error || "failed");
+  });
 
   function openModal() {
     let modal = document.querySelector("[data-mirelo-kb-modal]");
