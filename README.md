@@ -1,8 +1,14 @@
 # mirelo-studio-smart-agent
 
-Named knowledge bases for the [Mirelo Studio](https://mirelo.ai/studio) assistant.
+Named knowledge bases for the [Mirelo Studio](https://mirelo.ai/studio) Assistant.
 
-This is a showcase of how that feature could look. It is not a production part of Studio. Your notes stay in the browser, and a selected base is sent with the assistant prompt.
+This is a showcase of how that feature could look:
+
+- You can create knowledge bases that act as a baseline for consistent sound generation.
+- You can use the knowledge bases across projects for company-wide consistency.
+- You can let the Prompt Engineer analyze your prompt and optimize it for efficiency and accuracy.
+
+This project is not a production-ready extension. It is meant to give an idea of how such a feature could look. Your notes stay in the browser, and a selected knowledge base is sent with the assistant prompt.
 
 ## Features
 
