@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prompt Engineer</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #f2f2f2;
+      font: 15px/1.5 ui-sans-serif, system-ui, sans-serif;
+    }
+    main {
+      max-width: 520px;
+      margin: 48px auto;
+      padding: 0 20px 64px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .note, [data-status] { margin: 0; color: #9a9a9a; }
+    form {
+      margin-top: 24px;
+      background: #121212;
+      border: 1px solid #2a2a2a;
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    label { font-size: 13px; color: #9a9a9a; }
+    input[type="password"] {
+      width: 100%;
+      box-sizing: border-box;
+      background: #1b1b1b;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: inherit;
+      font: inherit;
+    }
+    input:focus { outline: 2px solid #f2f2f2; outline-offset: 2px; }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #f2f2f2;
+      font-size: 15px;
+    }
+    .actions { display: flex; gap: 8px; }
+    button {
+      border-radius: 999px;
+      padding: 10px 20px;
+      border: 1px solid #3a3a3a;
+      background: #1b1b1b;
+      color: inherit;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: #242424; }
+    button[type="submit"] {
+      background: #ececec;
+      color: #0a0a0a;
+      border-color: #ececec;
+      font-weight: 500;
+    }
+    button[type="submit"]:hover { background: #fff; }
+    button:focus-visible { outline: 2px solid #f2f2f2; outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Prompt Engineer</h1>
+    <p class="note">The key stays in this extension. Session storage clears when the browser quits. Remembering the key writes it unencrypted in your Chrome profile.</p>
+    <form>
+      <label for="key">OpenAI API key</label>
+      <input id="key" type="password" autocomplete="off" spellcheck="false">
+      <label class="check">
+        <input id="remember" type="checkbox">
+        Remember API key on this device
+      </label>
+      <div class="actions">
+        <button type="submit">Save</button>
+        <button type="button" data-delete>Delete</button>
+      </div>
+      <p data-status role="status"></p>
+    </form>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

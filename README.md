@@ -1,6 +1,6 @@
 # mirelo-studio-smart-agent
 
-A Chrome plugin for named knowledge bases for the [Mirelo Studio](https://mirelo.ai/studio) Assistant.
+A fully functional Chrome plugin for named knowledge bases in the [Mirelo Studio](https://mirelo.ai/studio) Assistant.
 
 This is a showcase of how that feature could look:
 
@@ -9,8 +9,11 @@ This is a showcase of how that feature could look:
 <img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can use the knowledge bases across projects for company-wide consistency.
 
 <img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can let the Prompt Engineer analyze your prompt and optimize it for efficiency and accuracy.
+<br>
+<img src="resources/warning.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;The plugin is fully functional, yet NOT production ready. Treat it as a developer tool:
 
-This project is not a production-ready extension. It is meant to give an idea of how such a feature could look. Your notes stay in the browser, and a selected knowledge base is sent with the assistant prompt.
+1. Make sure to set spend limits and expiration dates for the OpenAI API key. The key is isolated in local or session storage, but anyone who can access your Chrome profile can read it.
+2. The knowledge base is stored in local storage, so it persists only in this browser.
 
 ## Install
 
@@ -18,6 +21,13 @@ This project is not a production-ready extension. It is meant to give an idea of
 2. Turn on Developer mode.
 3. Choose **Load unpacked** and select the `extension` folder in this repo.
 4. Open Mirelo Studio and sign in.
+5. If you want to try out the ai-prompt-engineer that optimizes user prompts, make sure to add an API key: right-click the extension, choose **Options**, and add an OpenAI API key.
+
+<p>
+  <img src="resources/prompt-engineer-options-menu.png" width="180" alt="Extension menu with Options highlighted">
+  &nbsp;
+  <img src="resources/prompt-engineer-options.png" width="240" alt="Prompt Engineer options page for the OpenAI API key">
+</p>
 
 If you change the extension, click **Reload** on its card, then refresh Studio.
 
@@ -53,7 +63,9 @@ Conveniently create knowledge bases on the go:
 
 <p><img src="resources/use-kb-in-chat-window.gif" width="100%" alt="Using a knowledge base in Mirelo Assistant chat"></p>
 
-<h3><img src="resources/feature-prompt.svg" width="22" height="22" alt="" align="absmiddle"> &nbsp;&nbsp;Prompt Engineer</h3>
+<h3><img src="resources/feature-prompt.svg" width="22" height="22" alt="" align="absmiddle"> &nbsp;&nbsp;Prompt Engineer*</h3>
+
+Add an OpenAI API key in the extension options before using this feature.
 
 &emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Analyze your prompts
 
@@ -82,6 +94,8 @@ your prompt
 ```
 
 Studio sends the editor's own draft, so the notes are written through that editor. The extension does not make its own assistant request, and it does not read sign-in tokens.
+
+Prompt Engineer calls OpenAI from the extension service worker. Save your own API key in the extension options. The key is not in this repo, and the Studio page never receives it. With no key saved, optimize asks you to add one.
 
 It finds the assistant from the input, the composer, and the send button. A Studio update that renames those will need a matching change here.
 
