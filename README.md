@@ -1,8 +1,25 @@
 # mirelo-studio-smart-agent
 
-Named knowledge bases for the [Mirelo Studio](https://mirelo.ai/studio) assistant.
+A Chrome plugin for named knowledge bases for the [Mirelo Studio](https://mirelo.ai/studio) Assistant.
 
-This is a showcase of how that feature could look. It is not a production part of Studio. Your notes stay in the browser, and a selected base is sent with the assistant prompt.
+This is a showcase of how that feature could look:
+
+<img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can create knowledge bases that act as a baseline for consistent sound generation.
+
+<img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can use the knowledge bases across projects for company-wide consistency.
+
+<img src="resources/sparkle.svg" width="16" height="16" alt="" align="absmiddle">&nbsp;You can let the Prompt Engineer analyze your prompt and optimize it for efficiency and accuracy.
+
+This project is not a production-ready extension. It is meant to give an idea of how such a feature could look. Your notes stay in the browser, and a selected knowledge base is sent with the assistant prompt.
+
+## Install
+
+1. Open `chrome://extensions`.
+2. Turn on Developer mode.
+3. Choose **Load unpacked** and select the `extension` folder in this repo.
+4. Open Mirelo Studio and sign in.
+
+If you change the extension, click **Reload** on its card, then refresh Studio.
 
 ## Features
 
@@ -43,15 +60,6 @@ Conveniently create knowledge bases on the go:
 &emsp;&emsp;<img src="resources/check.svg" width="18" height="15" alt="" align="absmiddle">&nbsp;Get suggestions for optimized prompts that generate better SFX, speech and music
 
 <p><img src="resources/prompt-architect-window.gif" width="100%" alt="Getting help creating optimized prompts"></p>
-
-## Install
-
-1. Open `chrome://extensions`.
-2. Turn on Developer mode.
-3. Choose **Load unpacked** and select the `extension` folder in this repo.
-4. Open Mirelo Studio and sign in.
-
-If you change the extension, click **Reload** on its card, then refresh Studio.
 
 ## Implementation
 
